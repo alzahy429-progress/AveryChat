@@ -694,7 +694,11 @@
     renderFriendsList(); startPeerEngine(mySavedId);
 
     function startPeerEngine(chosenId) {
-        peer = new Peer(chosenId);
+        peer = new Peer(chosenId, {
+            host: "peerjs-server.herokuapp.com",
+            port: 443,
+            secure: true
+        });
         peer.on('open', (id) => { myIdText.innerText = `Room Network ID Token: ${id}`; });
         peer.on('connection', handleIncomingDataChannel);
         peer.on('call', (c) => { if(confirm("Accept incoming voice stream?")) { navigator.mediaDevices.getUserMedia({ audio: true }).then((s) => { localMicrophoneAudioStream = s; c.answer(s); bindVoiceCallEvents(c); }); } });
