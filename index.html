@@ -830,26 +830,37 @@
 
         peer.on('error', (err) => {
             console.error("PeerJS Layer Event Code:", err.type);
-            // Auto recovery script logic instead of forcing manual browser reloads
             if (err.type === 'disconnect' || err.type === 'network' || err.type === 'server-error') {
                 myIdText.innerText = "Network stutter detected. Hot-relinking engine...";
                 setTimeout(() => { startPeerEngine(chosenId); }, 2500);
             }
         });
 
-        peer.on('connection', handleIncomingDataChannel);
+        peer.on('connection', (conn) => {
+            handleIncomingDataChannel(conn);
+            // MUTUAL HANDSHAKE: When someone links to us, automatically build a return link to bypass firewalls
+            setTimeout(() => {
+                if (!activeConnections.some(c => c.peer === conn.peer)) {
+                    handleIncomingDataChannel(peer.connect(conn.peer));
+                }
+            }, 500);
+        });
+
         peer.on('call', (c) => { if(confirm("Accept incoming voice stream?")) { navigator.mediaDevices.getUserMedia({ audio: true }).then((s) => { localMicrophoneAudioStream = s; c.answer(s); bindVoiceCallEvents(c); }); } });
     }
 
-    connectBtn.addEventListener('click', () => { const id = friendIdInput.value.trim().toLowerCase(); if (id) handleIncomingDataChannel(peer.connect(id)); });
+    connectBtn.addEventListener('click', () => { 
+        const id = friendIdInput.value.trim().toLowerCase(); 
+        if (id) {
+            handleIncomingDataChannel(peer.connect(id)); 
+        }
+    });
 
     function handleIncomingDataChannel(conn) {
-        if (activeConnections.some(c => c.peer === conn.peer)) return;
-        conn.on('open', () => { 
-            activeConnections.push(conn); unreadCounters[conn.peer] = 0; renderFriendsList(); 
-            if (!currentTargetId) { currentTargetId = conn.peer; enableInputLayout(); }
-            conn.send({ gameType: "EMOJI_SYNC", dictionary: customEmojis });
-        });
+        // Clear any old duplicate or dead connection handlers matching this peer ID
+        activeConnections = activeConnections.filter(c => c.peer !== conn.peer);
+        
+        // Setup packet data hooks instantly BEFORE the 'open' event fires
         conn.on('data', (data) => {
             if (data.gameType) { handleIncomingGamePacket(data, conn.peer); return; }
             if (data.type === "STATUS_READ_NOTIFY") { const t = document.getElementById(`status-${data.msgId}`); if (t) t.innerText = "👁️ Read"; return; }
@@ -865,6 +876,28 @@
                 rawAppendMessageWithAccessories(data, 'incoming', conn.peer);
                 conn.send({ type: "STATUS_READ_NOTIFY", msgId: data.id });
             } else { unreadCounters[conn.peer] = (unreadCounters[conn.peer] || 0) + 1; renderFriendsList(); }
+        });
+
+        conn.on('open', () => { 
+            activeConnections.push(conn); 
+            unreadCounters[conn.peer] = 0; 
+
+            // Check if friend is already in Roster list; if not, auto-add them
+            if (!savedFriends.some(f => f.id === conn.peer)) {
+                savedFriends.push({ name: `Room User (${conn.peer.slice(0,4)})`, id: conn.peer });
+                localStorage.setItem('averychat_friends', JSON.stringify(savedFriends));
+            }
+            
+            // Force focus active window layout onto the newly established connection channel
+            currentTargetId = conn.peer;
+            const contextFriend = savedFriends.find(f => f.id === conn.peer);
+            chatTitleText.innerText = contextFriend ? contextFriend.name : conn.peer;
+            
+            renderFriendsList();
+            enableInputLayout();
+            
+            // Sync current emojis
+            conn.send({ gameType: "EMOJI_SYNC", dictionary: customEmojis });
         });
     }
 
