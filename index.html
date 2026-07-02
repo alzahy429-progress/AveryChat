@@ -78,9 +78,9 @@
         
         .setup-box { background: var(--sidebar-bg); padding: 10px 12px; border-bottom: 1px solid var(--accent-border); font-size: 0.8em; display: flex; flex-direction: column; gap: 6px; }
         .row { display: flex; gap: 6px; align-items: center; }
-        .messages { flex: 1; padding: 12px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; background: var(--chat-main-bg); }
+        .messages { flex: 1; padding: 12px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; background: var(--chat-main-bg); position: relative; }
         
-        .message-group { display: flex; flex-direction: column; max-width: 85%; }
+        .message-group { display: flex; flex-direction: column; max-width: 85%; transition: all 0.2s ease-in-out; }
         .message-group.incoming { align-self: flex-start; align-items: flex-start; }
         .message-group.outgoing { align-self: flex-end; align-items: flex-end; }
         
@@ -110,6 +110,16 @@
         .message-group.outgoing .message { background: var(--msg-bg-outgoing); color: var(--msg-text-outgoing); border-bottom-right-radius: 4px; }
         .status-meta-text { font-size: 0.62em; color: #94a3b8; font-weight: bold; margin-top: 2px; text-transform: uppercase; }
 
+        /* Apple Messages Typing Indicator Markup */
+        .apple-typing-bubble { display: flex; align-items: center; gap: 4px; padding: 10px 14px; background: var(--msg-bg-incoming); border-radius: 16px; border-bottom-left-radius: 4px; border: 1px solid var(--accent-border); width: fit-content; }
+        .apple-dot { width: 6px; height: 6px; background-color: #64748b; border-radius: 50%; opacity: 0.4; animation: appleDotPulse 1.4s infinite ease-in-out; }
+        .apple-dot:nth-child(2) { animation-delay: 0.2s; }
+        .apple-dot:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes appleDotPulse {
+            0%, 100% { transform: translateY(0); opacity: 0.4; }
+            50% { transform: translateY(-4px); opacity: 1; }
+        }
+
         .input-area { display: flex; padding: 10px; background: var(--header-bg); border-top: 1px solid var(--accent-border); gap: 6px; align-items: center; position: relative; }
         .input-area input[type="text"] { flex: 1; padding: 8px 14px; background: #ffffff; border: 1px solid var(--accent-border); border-radius: 20px; outline: none; font-size: 0.85em; color: #0f172a; min-width: 0; }
         
@@ -121,7 +131,6 @@
         button:disabled, input:disabled, select:disabled { opacity: 0.35; cursor: not-allowed; pointer-events: none; }
         .my-id-display { font-size: 0.75em; color: #475569; background: #e2e8f0; padding: 6px 10px; border-radius: 14px; font-weight: bold; flex: 1; text-align: center; word-break: break-all; }
         
-        .pronoun-tag { font-size: 0.75em; color: #64748b; background: #e2e8f0; padding: 1px 5px; border-radius: 4px; margin-left: 4px; font-weight: normal; }
         .panel-toggle-btn { background: #cbd5e1; color: #475569; padding: 4px 8px; border-radius: 6px; font-size: 0.8em; font-weight: bold; border: none; cursor: pointer; }
         .panel-toggle-btn:hover { background: #94a3b8; }
 
@@ -202,7 +211,7 @@
                             <button onclick="loadThemePresetColors('#f0fdf4','#ffffff','#f1f5f9','#ffffff','#f8fafc','#e2e8f0','#0f172a','#16a34a','#ffffff','#16a34a','#0ea5e9','#ef4444','#0f172a','#cbd5e1')" style="background:#16a34a; padding:3px 6px; border-radius:4px; font-size:0.9em;">Forest Canopy</button>
                             <button onclick="loadThemePresetColors('#fff7ed','#ffffff','#fef3c7','#ffffff','#fffbeb','#f59e0b','#ffffff','#ea580c','#ffffff','#ea580c','#d97706','#ef4444','#1e293b','#fcd34d')" style="background:#ea580c; padding:3px 6px; border-radius:4px; font-size:0.9em;">Autumn Grove</button>
                             <button onclick="loadThemePresetColors('#f0f9ff','#ffffff','#e0f2fe','#ffffff','#f8fafc','#bae6fd','#0369a1','#0284c7','#ffffff','#0284c7','#0ea5e9','#ef4444','#0f172a','#93c5fd')" style="background:#0284c7; padding:3px 6px; border-radius:4px; font-size:0.9em;">Ocean Breeze</button>
-                            <button onclick="loadThemePresetColors('#fffb00','#ffffff('#000000','#ffffff','#000000','#333333','#ffffff','#fffb00','#000000','#fffb00','#0ea5e9','#ef4444','#000000','#cbd5e1')" style="background:#ca8a04; padding:3px 6px; border-radius:4px; font-size:0.9em;">Desert Sun</button>
+                            <button onclick="loadThemePresetColors('#fffb00','#ffffff','#000000','#ffffff','#000000','#333333','#ffffff','#fffb00','#000000','#fffb00','#0ea5e9','#ef4444','#000000','#cbd5e1')" style="background:#ca8a04; padding:3px 6px; border-radius:4px; font-size:0.9em;">Desert Sun</button>
                         </div>
                     </div>
                 </div>
@@ -254,9 +263,6 @@
             <div class="sidebar-header">👥 FRIENDS ROSTER</div>
             <div class="entry-form">
                 <input type="text" id="friend-name-input" placeholder="Friend Name...">
-                <select id="friend-pronoun-select" style="display: none;">
-                    <option value=""></option>
-                </select>
                 <input type="text" id="friend-id-add-input" placeholder="Room ID...">
                 <button id="add-friend-btn" class="btn-action">Add Contact</button>
             </div>
@@ -273,7 +279,6 @@
                         <span id="chat-title-text">🚀 AveryChat</span>
                     </div>
                     <div style="display: flex; gap: 4px; align-items: center;">
-                        <div id="typing-indicator" style="font-size: 0.7em; color: #16a34a; font-weight: bold; display: none;">typing...</div>
                         <button class="settings-gear-btn" id="settings-trigger-button" onclick="toggleSettingsModal(true)" disabled>⚙️ <span>Studio</span></button>
                         <button class="panel-toggle-btn" id="toggle-utilities-btn" onclick="toggleUtilitiesDrawer()">Utilities ▶</button>
                     </div>
@@ -397,7 +402,6 @@
     const addFriendBtn = document.getElementById('add-friend-btn');
     const friendListContainer = document.getElementById('friend-list-container');
     const brokenKeyboardToggle = document.getElementById('broken-keyboard-toggle');
-    const typingIndicator = document.getElementById('typing-indicator');
     const settingsOverlayPanel = document.getElementById('settings-overlay-panel');
     const settingsTriggerButton = document.getElementById('settings-trigger-button');
     const giphyPopoverPanel = document.getElementById('giphy-popover-panel');
@@ -420,7 +424,6 @@
     let tttCells = Array(9).fill(""), myTttSymbol = "X", isTttTurn = true;
     let c4Grid = Array(42).fill(""), myC4Symbol = "R", isC4Turn = true;
 
-    // Permanent Letter Elimination Logic Arrays
     let availableAlphabetPool = [];
     let permanentlyEliminatedLetters = [];
     let chaosGameLoopIntervalId = null;
@@ -431,12 +434,8 @@
             availableAlphabetPool = "abcdefghijklmnopqrstuvwxyz".split("");
             permanentlyEliminatedLetters = [];
             reportDiv.innerText = "Eliminating letters shortly...";
-            
             eliminateOneRandomLetterPermanently();
-            
-            chaosGameLoopIntervalId = setInterval(() => {
-                eliminateOneRandomLetterPermanently();
-            }, 7000); 
+            chaosGameLoopIntervalId = setInterval(eliminateOneRandomLetterPermanently, 7000); 
         } else {
             clearInterval(chaosGameLoopIntervalId);
             chaosGameLoopIntervalId = null;
@@ -456,7 +455,6 @@
         const randomIndex = Math.floor(Math.random() * availableAlphabetPool.length);
         const droppedLetter = availableAlphabetPool.splice(randomIndex, 1)[0];
         permanentlyEliminatedLetters.push(droppedLetter);
-        
         reportDiv.innerText = `Banned Letters: [ ${permanentlyEliminatedLetters.join(" ").toUpperCase()} ]`;
     }
 
@@ -766,6 +764,32 @@
     function clearChatHistoryCache() { chatHistories = {}; localStorage.removeItem('averychat_history'); messageBox.innerHTML = ''; }
     function clearSavedFriends() { if (confirm("Delete all contacts?")) { savedFriends = []; localStorage.removeItem('averychat_friends'); renderFriendsList(); } }
 
+    function updateAppleTypingIndicator(show, senderId) {
+        const legacyNode = document.getElementById('apple-typing-wrapper');
+        if (legacyNode) legacyNode.remove();
+        
+        if (!show) return;
+        
+        const g = document.createElement('div');
+        g.id = 'apple-typing-wrapper';
+        g.classList.add('message-group', 'incoming');
+        g.innerHTML = `
+            <div class="sender-name-label">${senderId}</div>
+            <div class="message-row incoming">
+                <div class="avatar-container-wrapper">
+                    <img class="avatar border-default" src="https://api.dicebear.com/7.x/bottts/svg?seed=${senderId}">
+                </div>
+                <div class="apple-typing-bubble">
+                    <div class="apple-dot"></div>
+                    <div class="apple-dot"></div>
+                    <div class="apple-dot"></div>
+                </div>
+            </div>
+        `;
+        messageBox.appendChild(g);
+        messageBox.scrollTop = messageBox.scrollHeight;
+    }
+
     function handleIncomingGamePacket(data, senderId) {
         if (data.gameType === "EMOJI_SYNC") { peerEmojiDictionaries[senderId] = data.dictionary; }
         else if (data.gameType === "CO_BROWSE_URL") { document.getElementById('browser-url-field').value = data.inputRaw; document.getElementById('google-iframe-frame').src = data.url; }
@@ -784,7 +808,19 @@
     renderFriendsList(); renderCustomEmojiTray(); startPeerEngine(mySavedId);
 
     function startPeerEngine(chosenId) {
-        peer = new Peer(chosenId, { host: "averychat-peer-server.onrender.com", port: 443, path: "/peerjs", secure: true });
+        // Connected fallback servers to assist data passage across tricky home networks
+        peer = new Peer(chosenId, { 
+            host: "averychat-peer-server.onrender.com", 
+            port: 443, 
+            path: "/peerjs", 
+            secure: true,
+            config: {
+                iceServers: [
+                    { urls: 'stun:stun.l.google.com:19302' },
+                    { urls: 'stun:stun1.l.google.com:19302' }
+                ]
+            }
+        });
         peer.on('open', (id) => { myIdText.innerText = `Room Network ID Token: ${id}`; });
         peer.on('connection', handleIncomingDataChannel);
         peer.on('call', (c) => { if(confirm("Accept incoming voice stream?")) { navigator.mediaDevices.getUserMedia({ audio: true }).then((s) => { localMicrophoneAudioStream = s; c.answer(s); bindVoiceCallEvents(c); }); } });
@@ -802,8 +838,11 @@
         conn.on('data', (data) => {
             if (data.gameType) { handleIncomingGamePacket(data, conn.peer); return; }
             if (data.type === "STATUS_READ_NOTIFY") { const t = document.getElementById(`status-${data.msgId}`); if (t) t.innerText = "👁️ Read"; return; }
-            if (data.type === "TYPING_UPDATE") { if (conn.peer === currentTargetId) typingIndicator.style.display = data.typing ? "block" : "none"; return; }
+            if (data.type === "TYPING_UPDATE") { if (conn.peer === currentTargetId) updateAppleTypingIndicator(data.typing, conn.peer); return; }
             
+            // Wipe typing indicator bubble when an active payload hits
+            if (conn.peer === currentTargetId) updateAppleTypingIndicator(false, conn.peer);
+
             if (!chatHistories[conn.peer]) chatHistories[conn.peer] = [];
             chatHistories[conn.peer].push({ ...data, direction: 'incoming' });
             localStorage.setItem('averychat_history', JSON.stringify(chatHistories));
@@ -825,13 +864,15 @@
     messageInput.addEventListener('input', () => {
         const conn = activeConnections.find(c => c.peer === currentTargetId); if (!conn) return;
         clearTimeout(typingTimer); conn.send({ type: "TYPING_UPDATE", typing: true });
-        typingTimer = setTimeout(() => { conn.send({ type: "TYPING_UPDATE", typing: false }); }, 1500);
+        typingTimer = setTimeout(() => { conn.send({ type: "TYPING_UPDATE", typing: false }); }, 2000);
     });
 
     function sendMessage() {
         let text = messageInput.value.trim(); if (!text) return;
         
-        // Permanent Elimination Filter Loop
+        const conn = activeConnections.find(c => c.peer === currentTargetId);
+        if (conn) conn.send({ type: "TYPING_UPDATE", typing: false });
+
         if (brokenKeyboardToggle.checked && permanentlyEliminatedLetters.length > 0) {
             permanentlyEliminatedLetters.forEach(letter => {
                 const regex = new RegExp(letter, 'gi');
@@ -842,7 +883,7 @@
         const msgId = 'msg-' + Math.random().toString(36).slice(2, 9);
         const packet = { type: "TEXT", id: msgId, text, avatar: myAvatarString, borderStyle: activeBorderClass, flagIcon: activeCornerFlag };
         
-        const conn = activeConnections.find(c => c.peer === currentTargetId); if (conn) conn.send(packet);
+        if (conn) conn.send(packet);
         if (!chatHistories[currentTargetId]) chatHistories[currentTargetId] = [];
         chatHistories[currentTargetId].push({ ...packet, direction: 'outgoing' });
         localStorage.setItem('averychat_history', JSON.stringify(chatHistories));
@@ -853,6 +894,10 @@
     messageInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendMessage(); });
 
     function rawAppendMessageWithAccessories(packet, direction, sender) {
+        // Clear any floating typing objects before rendering standard blocks
+        const legacyNode = document.getElementById('apple-typing-wrapper');
+        if (legacyNode) legacyNode.remove();
+
         const g = document.createElement('div'); g.classList.add('message-group', direction);
         const metaStr = direction === 'outgoing' ? `<div class="status-meta-text" id="status-${packet.id}">✓ Sent</div>` : '';
         
