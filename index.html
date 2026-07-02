@@ -2,18 +2,18 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AveryChat Desktop Studio</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>AveryChat Studio</title>
     <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
     
     <style id="theme-variable-styles">
         :root {
-            --body-bg: #f8fafc;
+            --body-bg: #f0fdf4;
             --container-bg: #ffffff;
-            --nav-bg: #ffffff;
+            --sidebar-bg: #f1f5f9;
             --chat-main-bg: #ffffff;
-            --header-bg: #f0fdf4;
-            --msg-bg-incoming: #f1f5f9;
+            --header-bg: #f8fafc;
+            --msg-bg-incoming: #e2e8f0;
             --msg-text-incoming: #0f172a;
             --msg-bg-outgoing: #16a34a;
             --msg-text-outgoing: #ffffff;
@@ -21,244 +21,364 @@
             --action-button: #0ea5e9;
             --danger-button: #ef4444;
             --text-main: #0f172a;
-            --accent-border: #e2e8f0;
+            --accent-border: #cbd5e1;
         }
     </style>
     
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: var(--body-bg); margin: 0; padding: 0; color: var(--text-main); display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: var(--body-bg); display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; color: var(--text-main); transition: background 0.3s; }
+        .app-container { width: 1380px; max-width: 100%; height: 880px; max-height: 100vh; background: var(--container-bg); border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); display: flex; overflow: hidden; border: 1px solid var(--accent-border); position: relative; }
         
-        /* Fixed Grid Layout Desktop Frame */
-        .app-frame { flex: 1; display: flex; flex-direction: column; height: 100%; overflow: hidden; }
+        .sidebar { width: 260px; background: var(--sidebar-bg); border-right: 1px solid var(--accent-border); display: flex; flex-direction: column; transition: transform 0.3s ease, width 0.3s ease, opacity 0.3s ease; overflow: hidden; }
+        .sidebar.hidden-panel { width: 0px; min-width: 0px; opacity: 0; border-right: none; }
         
-        /* Upper Toolbar Header */
-        .app-header { background: var(--header-bg); padding: 14px 20px; border-bottom: 1px solid var(--accent-border); display: flex; justify-content: space-between; align-items: center; }
-        .app-header-title { font-size: 1.2em; font-weight: 800; letter-spacing: -0.02em; color: #14532d; }
+        .sidebar-section { flex: 1; display: flex; flex-direction: column; overflow: hidden; width: 260px; }
+        .sidebar-header { padding: 10px; background: rgba(0,0,0,0.05); font-weight: 700; font-size: 0.82em; color: var(--text-main); border-bottom: 1px solid var(--accent-border); text-align: center; letter-spacing: 0.05em; }
         
-        /* Token Status Area */
-        .id-banner { background: #f0fdf4; border-bottom: 1px solid var(--accent-border); padding: 10px 20px; font-size: 0.8em; font-weight: 600; text-align: center; color: #16a34a; }
+        .entry-form { padding: 8px; display: flex; flex-direction: column; gap: 6px; background: var(--sidebar-bg); border-bottom: 1px solid var(--accent-border); }
+        .entry-form input, .entry-form select { padding: 6px; background: #ffffff; border: 1px solid var(--accent-border); border-radius: 6px; font-size: 0.78em; outline: none; color: #0f172a; }
         
-        /* Desktop Split Screens Configuration */
-        .main-split-container { flex: 1; display: flex; flex-direction: row; overflow: hidden; width: 100%; }
+        .list-container { flex: 1; overflow-y: auto; padding: 6px; display: flex; flex-direction: column; gap: 6px; }
+        .list-item { display: flex; justify-content: space-between; align-items: center; background: #ffffff; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--accent-border); cursor: pointer; transition: all 0.2s; color: #0f172a; }
+        .list-item:hover { transform: translateY(-1px); box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .list-item.active-chat { border-color: #16a34a; background: #f0fdf4; }
+        .unread-count-badge { background: var(--danger-button); color: white; font-size: 0.7em; font-weight: bold; padding: 2px 6px; border-radius: 10px; margin-left: auto; }
+
+        .workspace-split { flex: 1; display: flex; background: var(--chat-main-bg); overflow: hidden; position: relative; }
+        .chat-main { flex: 1; display: flex; flex-direction: column; border-right: 1px solid var(--accent-border); overflow: hidden; position: relative; width: 100%; }
         
-        /* Permanent Panels Left/Right Sidebars */
-        .side-panel-left { width: 300px; border-right: 1px solid var(--accent-border); background: #f8fafc; display: flex; flex-direction: column; overflow-y: auto; }
-        .side-panel-right { width: 360px; border-left: 1px solid var(--accent-border); background: #f8fafc; display: flex; flex-direction: column; overflow-y: auto; }
+        .games-panel { width: 460px; background: var(--sidebar-bg); display: flex; flex-direction: column; overflow-y: auto; border-left: 1px solid var(--accent-border); padding: 10px; gap: 10px; transition: transform 0.3s ease, width 0.3s ease, opacity 0.3s ease, padding 0.3s ease; box-sizing: border-box; }
+        .games-panel.hidden-panel { width: 0px; min-width: 0px; opacity: 0; padding: 0px; border-left: none; }
         
-        /* Central Active Chat Pane Window */
-        .chat-view-panel { flex: 1; display: flex; flex-direction: column; background: var(--chat-main-bg); overflow: hidden; position: relative; }
+        .games-header { font-size: 0.85em; font-weight: bold; color: var(--text-main); text-align: center; padding-bottom: 6px; border-bottom: 2px dashed var(--accent-border); letter-spacing: 0.05em; width: 100%; box-sizing: border-box; }
         
-        /* Chat Logs Scroll Box */
-        .messages-container { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 14px; }
-        .message-group { display: flex; flex-direction: column; max-width: 75%; }
+        .game-card-box { background: #ffffff; border: 1px solid var(--accent-border); border-radius: 10px; padding: 10px; display: flex; flex-direction: column; gap: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.02); color: #0f172a; width: 100%; box-sizing: border-box; transition: all 0.3s ease-in-out; }
+        .game-card-box.maximized-app { flex: 1; min-height: 380px; }
+        .game-card-box.minimized-sibling { display: none !important; }
+
+        .game-title { font-size: 0.8em; font-weight: 700; color: #0f172a; display: flex; justify-content: space-between; align-items: center; }
+        .window-size-btn { background: transparent; color: #64748b; border: none; cursor: pointer; padding: 2px 6px; font-size: 1.1em; font-weight: bold; border-radius: 4px; }
+        .window-size-btn:hover { background: #cbd5e1; }
+        
+        .maze-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; background: var(--accent-border); padding: 4px; border-radius: 6px; }
+        .maze-cell { height: 38px; background: white; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.1em; font-weight: bold; user-select: none; border-radius: 4px; }
+        .maze-cell.wall-block { background: #15803d !important; color: white; }
+
+        .ttt-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; background: var(--accent-border); padding: 6px; border-radius: 8px; }
+        .ttt-cell { height: 60px; background: white; font-size: 1.8em; font-weight: bold; display: flex; align-items: center; justify-content: center; cursor: pointer; border-radius: 6px; }
+
+        .c4-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; background: #065f46; padding: 6px; border-radius: 8px; }
+        .c4-cell { height: 34px; background: #047857; border-radius: 50%; cursor: pointer; transition: background 0.2s; }
+        .c4-cell.p1 { background: #b91c1c; }
+        .c4-cell.p2 { background: #eab308; }
+
+        .header { background: var(--header-bg); padding: 10px 12px; display: flex; flex-direction: column; border-bottom: 1px solid var(--accent-border); }
+        .header-top { display: flex; justify-content: space-between; align-items: center; width: 100%; }
+        .header-main-title { font-size: 0.95em; font-weight: 700; color: var(--text-main); display: flex; align-items: center; gap: 6px; }
+        
+        .setup-box { background: var(--sidebar-bg); padding: 10px 12px; border-bottom: 1px solid var(--accent-border); font-size: 0.8em; display: flex; flex-direction: column; gap: 6px; }
+        .row { display: flex; gap: 6px; align-items: center; }
+        .messages { flex: 1; padding: 12px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; background: var(--chat-main-bg); }
+        
+        .message-group { display: flex; flex-direction: column; max-width: 85%; }
         .message-group.incoming { align-self: flex-start; align-items: flex-start; }
         .message-group.outgoing { align-self: flex-end; align-items: flex-end; }
         
-        .sender-label { font-size: 0.75em; font-weight: 700; color: #64748b; margin-bottom: 4px; margin-left: 40px; }
-        .message-group.outgoing .sender-label { margin-left: 0; margin-right: 40px; text-align: right; }
+        .sender-name-label { font-size: 0.68em; font-weight: 700; color: #64748b; margin-bottom: 2px; margin-left: 32px; }
+        .message-group.outgoing .sender-name-label { margin-left: 0; margin-right: 32px; text-align: right; }
         
-        .avatar-wrap { position: relative; width: 40px; height: 40px; display: flex; justify-content: center; align-items: center; flex-shrink: 0; }
-        .avatar-img { width: 36px; height: 36px; border-radius: 50%; background: #e2e8f0; border: 1px solid var(--accent-border); object-fit: cover; }
+        .avatar-container-wrapper { position: relative; width: 34px; height: 34px; display: flex; justify-content: center; align-items: center; flex-shrink: 0; }
+        .avatar { width: 28px; height: 28px; border-radius: 50%; background: #e2e8f0; border: 1px solid var(--accent-border); object-fit: cover; box-sizing: border-box; }
         
-        .border-default { border: 1px solid var(--accent-border); }
-        .border-forest { border: 2.5px solid transparent; background: linear-gradient(white, white) padding-box, linear-gradient(to right, #15803d, #14532d) border-box; }
-        .border-autumn { border: 2.5px solid transparent; background: linear-gradient(white, white) padding-box, linear-gradient(to right, #c2410c, #ca8a04) border-box; }
-        .border-ocean { border: 2.5px solid transparent; background: linear-gradient(white, white) padding-box, linear-gradient(to right, #0369a1, #0f766e) border-box; }
+        .border-default { border: 1px solid var(--accent-border) !important; }
+        .border-forest { border: 3px solid transparent !important; background: linear-gradient(white, white) padding-box, linear-gradient(to right, #15803d, #166534, #14532d) border-box !important; }
+        .border-autumn { border: 3px solid transparent !important; background: linear-gradient(white, white) padding-box, linear-gradient(to right, #c2410c, #b45309, #ca8a04) border-box !important; }
+        .border-ocean { border: 3px solid transparent !important; background: linear-gradient(white, white) padding-box, linear-gradient(to right, #0369a1, #0e7490, #0f766e) border-box !important; }
 
-        .badge-icon { position: absolute; bottom: -1px; right: -1px; font-size: 0.7em; background: white; border-radius: 50%; width: 16px; height: 16px; display: flex; justify-content: center; align-items: center; box-shadow: 0 1px 2px rgba(0,0,0,0.15); }
-        
-        .msg-row { display: flex; gap: 10px; align-items: flex-end; width: 100%; }
-        .msg-row.outgoing { flex-direction: row-reverse; }
-        
-        .bubble { padding: 12px 16px; border-radius: 18px; word-wrap: break-word; font-size: 0.95em; line-height: 1.45; box-shadow: 0 1px 2px rgba(0,0,0,0.02); }
-        .message-group.incoming .bubble { background: var(--msg-bg-incoming); color: var(--msg-text-incoming); border-bottom-left-radius: 4px; }
-        .message-group.outgoing .bubble { background: var(--msg-bg-outgoing); color: var(--msg-text-outgoing); border-bottom-right-radius: 4px; }
-        
-        .bubble img { max-width: 100%; border-radius: 10px; display: block; margin-top: 6px; }
-        .custom-emoji-img { width: 24px; height: 24px; object-fit: contain; vertical-align: middle; display: inline-block; }
-        .meta-text { font-size: 0.65em; color: #94a3b8; font-weight: bold; margin-top: 4px; text-transform: uppercase; }
+        .flag-badge { position: absolute; bottom: -2px; right: -2px; font-size: 0.65em; background: white; border-radius: 50%; padding: 1px; line-height: 1; box-shadow: 0 1px 3px rgba(0,0,0,0.2); width: 14px; height: 14px; display: flex; justify-content: center; align-items: center; }
 
-        /* Desktop Input Station Footer Layout */
-        .input-bar-container { padding: 14px 20px; background: var(--nav-bg); border-top: 1px solid var(--accent-border); display: flex; gap: 10px; align-items: center; }
-        .input-bar-container input[type="text"] { flex: 1; padding: 12px 18px; background: #f1f5f9; border: none; border-radius: 24px; font-size: 0.95em; outline: none; color: #0f172a; }
-        .bar-btn { width: 42px; height: 42px; border-radius: 50%; background: #f1f5f9; border: none; display: flex; align-items: center; justify-content: center; font-size: 1.1em; cursor: pointer; flex-shrink: 0; }
-        .send-pill-btn { background: var(--primary-button); color: white; padding: 12px 22px; border-radius: 24px; border: none; font-weight: 700; font-size: 0.9em; cursor: pointer; }
+        .message-row { display: flex; gap: 8px; align-items: flex-end; width: 100%; }
+        .message-row.outgoing { flex-direction: row-reverse; }
 
-        /* Static Block Component Modules */
-        .section-card { margin: 16px; background: white; border: 1px solid var(--accent-border); border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.01); }
-        .card-header-title { font-size: 0.85em; font-weight: 800; color: #475569; text-transform: uppercase; letter-spacing: 0.02em; border-bottom: 1px dashed var(--accent-border); padding-bottom: 6px; }
-        
-        /* Game Framework Sub-Grids */
-        .m-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
-        .m-grid-5 { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
-        .m-grid-7 { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; background: #065f46; padding: 8px; border-radius: 8px; }
-        
-        .ttt-cell-m { height: 60px; background: #f1f5f9; font-size: 1.6em; font-weight: bold; display: flex; align-items: center; justify-content: center; border-radius: 6px; cursor: pointer; }
-        .maze-cell-m { height: 38px; background: #f1f5f9; display: flex; align-items: center; justify-content: center; border-radius: 4px; font-size: 1em; cursor: pointer; }
-        .maze-cell-m.wall-block { background: #16a34a !important; }
-        .c4-cell-m { height: 32px; background: #047857; border-radius: 50%; cursor: pointer; }
-        .c4-cell-m.p1 { background: #b91c1c; }
-        .c4-cell-m.p2 { background: #eab308; }
+        .message { padding: 8px 12px; border-radius: 14px; word-wrap: break-word; font-size: 0.85em; line-height: 1.4; box-shadow: 0 1px 2px rgba(0,0,0,0.03); max-width: 100%; }
+        .message img.chat-gif { max-width: 100%; border-radius: 8px; display: block; margin-top: 4px; }
+        .message img.chat-image { max-width: 100%; max-height: 240px; border-radius: 8px; display: block; margin-top: 4px; }
+        .chat-custom-emoji { width: 24px; height: 24px; object-fit: contain; vertical-align: middle; display: inline-block; margin: 0 2px; }
+        .file-attachment-box { display: flex; align-items: center; gap: 8px; background: rgba(0,0,0,0.05); padding: 6px 12px; border-radius: 8px; margin-top: 4px; }
 
-        /* Floating Popovers */
-        .giphy-panel-m { display: none; position: absolute; bottom: 74px; left: 20px; width: 400px; height: 260px; background: white; border: 1px solid var(--accent-border); border-radius: 12px; box-shadow: 0 8px 16px rgba(0,0,0,0.08); z-index: 500; flex-direction: column; overflow: hidden; }
-        .giphy-grid-m { flex: 1; overflow-x: auto; display: flex; gap: 8px; padding: 12px; align-items: center; background: #f8fafc; }
-        .giphy-grid-m img { height: 180px; width: 150px; object-fit: cover; border-radius: 8px; flex-shrink: 0; cursor: pointer; }
+        .message-group.incoming .message { background: var(--msg-bg-incoming); color: var(--msg-text-incoming); border-bottom-left-radius: 4px; border: 1px solid var(--accent-border); }
+        .message-group.outgoing .message { background: var(--msg-bg-outgoing); color: var(--msg-text-outgoing); border-bottom-right-radius: 4px; }
+        .status-meta-text { font-size: 0.62em; color: #94a3b8; font-weight: bold; margin-top: 2px; text-transform: uppercase; }
 
-        .list-item-m { display: flex; justify-content: space-between; padding: 12px; background: #f8fafc; border-radius: 8px; border: 1px solid var(--accent-border); font-size: 0.9em; font-weight: bold; cursor: pointer; }
-        .list-item-m.active { border-color: #16a34a; background: #f0fdf4; }
+        .input-area { display: flex; padding: 10px; background: var(--header-bg); border-top: 1px solid var(--accent-border); gap: 6px; align-items: center; position: relative; }
+        .input-area input[type="text"] { flex: 1; padding: 8px 14px; background: #ffffff; border: 1px solid var(--accent-border); border-radius: 20px; outline: none; font-size: 0.85em; color: #0f172a; min-width: 0; }
         
-        .flex-row { display: flex; gap: 8px; width: 100%; box-sizing: border-box; }
-        .input-text-m { flex: 1; padding: 10px 14px; border: 1px solid var(--accent-border); border-radius: 8px; font-size: 0.9em; outline: none; min-width: 0; }
-        .btn-m { background: var(--primary-button); color: white; padding: 10px 16px; border-radius: 8px; border: none; font-weight: 700; font-size: 0.85em; cursor: pointer; }
+        .circle-btn { width: 34px; height: 34px; border-radius: 50%; padding: 0; display: flex; align-items: center; justify-content: center; font-size: 1em; background: #e2e8f0; color: #475569; border: none; cursor: pointer; flex-shrink: 0; }
+        button, .btn-style { color: white; border: none; padding: 6px 12px; border-radius: 14px; cursor: pointer; font-weight: 700; font-size: 0.78em; transition: opacity 0.2s; }
+        button:hover { opacity: 0.9; }
+        #send-btn { background: var(--primary-button); border-radius: 20px; padding: 8px 14px; flex-shrink: 0; }
+        .btn-action { background: var(--action-button); }
+        button:disabled, input:disabled, select:disabled { opacity: 0.35; cursor: not-allowed; pointer-events: none; }
+        .my-id-display { font-size: 0.75em; color: #475569; background: #e2e8f0; padding: 6px 10px; border-radius: 14px; font-weight: bold; flex: 1; text-align: center; word-break: break-all; }
+        
+        .pronoun-tag { font-size: 0.75em; color: #64748b; background: #e2e8f0; padding: 1px 5px; border-radius: 4px; margin-left: 4px; font-weight: normal; }
+        .panel-toggle-btn { background: #cbd5e1; color: #475569; padding: 4px 8px; border-radius: 6px; font-size: 0.8em; font-weight: bold; border: none; cursor: pointer; }
+        .panel-toggle-btn:hover { background: #94a3b8; }
+
+        .giphy-popover { display: none; position: absolute; bottom: 55px; right: 10px; width: 280px; height: 320px; background: #ffffff; border: 1px solid var(--accent-border); border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.15); z-index: 2000; flex-direction: column; overflow: hidden; }
+        .giphy-header { padding: 8px; background: #f1f5f9; display: flex; gap: 4px; border-bottom: 1px solid var(--accent-border); }
+        .giphy-search-input { flex: 1; padding: 4px 8px; font-size: 0.8em; border: 1px solid var(--accent-border); border-radius: 6px; outline: none; }
+        .giphy-results { flex: 1; overflow-y: auto; display: grid; grid-template-columns: repeat(2, 1fr); gap: 4px; padding: 6px; background: #f8fafc; }
+        .giphy-results img { width: 100%; height: 90px; object-fit: cover; border-radius: 4px; cursor: pointer; transition: transform 0.1s; }
+        .giphy-results img:hover { transform: scale(1.03); }
+
+        .settings-overlay { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.6); z-index: 3000; justify-content: center; align-items: center; backdrop-filter: blur(4px); padding: 10px; box-sizing: border-box; }
+        .settings-modal { background: #ffffff; width: 460px; max-width: 100%; border-radius: 14px; border: 1px solid var(--accent-border); box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); overflow: hidden; display: flex; flex-direction: column; max-height: 90vh; }
+        .settings-modal-header { padding: 12px 16px; background: #f1f5f9; border-bottom: 1px solid var(--accent-border); display: flex; justify-content: space-between; align-items: center; font-weight: bold; font-size: 0.9em; color: #0f172a; }
+        .settings-modal-body { padding: 16px; display: flex; flex-direction: column; gap: 12px; overflow-y: auto; }
+        .close-settings-btn { background: transparent; color: #64748b; font-size: 1.2em; cursor: pointer; border: none; padding: 0; font-weight: bold; }
+        .settings-gear-btn { background: #e2e8f0; color: #475569; padding: 6px 10px; border-radius: 8px; font-size: 0.8em; font-weight: bold; display: flex; align-items: center; gap: 4px; border: none; cursor: pointer; }
+        
+        .picker-row { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 4px; font-size: 0.95em; }
+        .picker-row input[type="color"] { border: none; width: 40px; height: 24px; padding: 0; border-radius: 4px; cursor: pointer; background: transparent; }
+
+        @media (max-width: 768px) {
+            body { padding: 0; height: 100vh; width: 100vw; overflow: hidden; }
+            .app-container { width: 100vw; height: 100vh; max-height: 100vh; border-radius: 0; border: none; }
+            .sidebar { position: absolute; left: 0; top: 0; height: 100%; z-index: 1000; width: 280px; box-shadow: 5px 0 15px rgba(0,0,0,0.1); transform: translateX(0); }
+            .sidebar.hidden-panel { transform: translateX(-100%); width: 280px; opacity: 1; }
+            .games-panel { position: absolute; right: 0; top: 0; height: 100%; z-index: 1000; width: 100vw; max-width: 320px; box-shadow: -5px 0 15px rgba(0,0,0,0.1); transform: translateX(0); }
+            .games-panel.hidden-panel { transform: translateX(100%); width: 320px; opacity: 1; padding: 10px !important; }
+            .settings-gear-btn span { display: none; }
+        }
     </style>
 </head>
 <body>
 
 <audio id="incoming-voice-element" autoplay></audio>
 
-<div class="app-frame">
-    <div class="app-header">
-        <div class="app-header-title" id="app-view-title">AveryChat Studio Pro</div>
-        <div id="typing-indicator" style="font-size: 0.8em; color: #16a34a; font-weight: bold; display: none;">typing...</div>
-    </div>
-    
-    <div class="id-banner" id="my-id-text">Initializing Identity Node...</div>
-
-    <div class="main-split-container">
-        
-        <div class="side-panel-left">
-            <div class="section-card">
-                <div class="card-header-title">🔗 Room Linker Engine</div>
-                <div class="flex-row" style="margin-top:4px;">
-                    <input type="text" id="friend-id-input" class="input-text-m" placeholder="Enter Room Token...">
-                    <button onclick="triggerManualPeerConnection()" class="btn-m" style="background:var(--action-button)">Link</button>
-                </div>
-            </div>
-
-            <div class="section-card">
-                <div class="card-header-title">👥 Contact Directory Book</div>
-                <div class="flex-row" style="margin-top:4px;">
-                    <input type="text" id="friend-name-input" class="input-text-m" placeholder="Name...">
-                    <input type="text" id="friend-id-add-input" class="input-text-m" placeholder="Room ID...">
-                </div>
-                <button onclick="addNewRosterFriend()" class="btn-m" style="background:var(--action-button); width:100%;">Add Entry</button>
-                <div style="display:flex; flex-direction:column; gap:6px; margin-top:8px;" id="friend-list-container"></div>
-            </div>
+<div class="settings-overlay" id="settings-overlay-panel">
+    <div class="settings-modal">
+        <div class="settings-modal-header">
+            <span>⚙️ AveryChat Settings & Studio</span>
+            <button class="close-settings-btn" onclick="toggleSettingsModal(false)">&times;</button>
         </div>
-
-        <div class="chat-view-panel">
-            <div class="messages-container" id="message-box"></div>
+        <div class="settings-modal-body">
             
-            <div id="chaos-eliminated-banner" style="background: #fef08a; padding: 8px 20px; font-size: 0.8em; font-weight: bold; color: #b91c1c; display:none; border-top: 1px solid var(--accent-border);">
-                Banned Letters: None
-            </div>
-
-            <div class="giphy-panel-m" id="giphy-popover-panel">
-                <div style="padding: 8px 12px; background:#f1f5f9; display:flex;">
-                    <input type="text" id="giphy-search-box" class="input-text-m" placeholder="Search Giphy/Tenor GIFs..." onkeyup="searchGiphyChannels()">
+            <div class="game-card-box" style="border-top: 3px solid #16a34a;">
+                <div class="game-title">🐱 Custom Emoji Studio</div>
+                <div style="font-size: 0.75em; display:flex; flex-direction:column; gap:6px; margin-top:4px;">
+                    <div style="display:flex; gap:4px;">
+                        <input type="text" id="emoji-shortcode-input" placeholder="e.g. :catsmile:" style="flex:1; padding:4px; border-radius:4px; border:1px solid var(--accent-border);">
+                        <input type="file" id="emoji-file-input" accept="image/*" style="display:none;" onchange="processNewEmojiUpload(this)">
+                        <button onclick="document.getElementById('emoji-file-input').click()" style="background:#475569; padding:4px 8px; border-radius:4px;">Choose Image</button>
+                    </div>
+                    <div id="emoji-preview-status" style="color:gray; font-style:italic;">No image staged</div>
+                    <div id="my-emoji-tray" style="display:flex; gap:6px; flex-wrap:wrap; margin-top:4px; padding-top:4px; border-top:1px dashed var(--accent-border);"></div>
                 </div>
-                <div class="giphy-grid-m" id="giphy-results-grid"></div>
             </div>
 
-            <div class="input-bar-container">
+            <div class="game-card-box" style="border-top: 3px solid #0ea5e9;">
+                <div class="game-title">🎨 Real-time Canvas Theme Builder</div>
+                <div style="font-size: 0.75em; display:flex; flex-direction:column; gap:4px; margin-top:6px;">
+                    <label class="picker-row"><span>🌌 Application Outer Background:</span><input type="color" id="theme-body-bg" value="#f0fdf4" oninput="applyCustomThemeFromPickers()"></label>
+                    <label class="picker-row"><span>📦 Main Containers Panel BG:</span><input type="color" id="theme-container-bg" value="#ffffff" oninput="applyCustomThemeFromPickers()"></label>
+                    <label class="picker-row"><span>📁 Sidebars & Drawers BG:</span><input type="color" id="theme-sidebar-bg" value="#f1f5f9" oninput="applyCustomThemeFromPickers()"></label>
+                    <label class="picker-row"><span>💬 Message Stream Grid Background:</span><input type="color" id="theme-chat-main-bg" value="#ffffff" oninput="applyCustomThemeFromPickers()"></label>
+                    <label class="picker-row"><span>🗂️ Header & Action Toolbars BG:</span><input type="color" id="theme-header-bg" value="#f8fafc" oninput="applyCustomThemeFromPickers()"></label>
+                    <label class="picker-row"><span>📥 Incoming Message Capsule BG:</span><input type="color" id="theme-msg-bg-incoming" value="#e2e8f0" oninput="applyCustomThemeFromPickers()"></label>
+                    <label class="picker-row"><span>🔤 Incoming Message Text Color:</span><input type="color" id="theme-msg-text-incoming" value="#0f172a" oninput="applyCustomThemeFromPickers()"></label>
+                    <label class="picker-row"><span>📤 Outgoing Message Capsule BG:</span><input type="color" id="theme-msg-bg-outgoing" value="#16a34a" oninput="applyCustomThemeFromPickers()"></label>
+                    <label class="picker-row"><span>🔤 Outgoing Message Text Color:</span><input type="color" id="theme-msg-text-outgoing" value="#ffffff" oninput="applyCustomThemeFromPickers()"></label>
+                    <label class="picker-row"><span>🟢 Primary Button Base Accent:</span><input type="color" id="theme-primary-button" value="#16a34a" oninput="applyCustomThemeFromPickers()"></label>
+                    <label class="picker-row"><span>🔵 Success Action Button Fill:</span><input type="color" id="theme-action-button" value="#0ea5e9" oninput="applyCustomThemeFromPickers()"></label>
+                    <label class="picker-row"><span>🔴 Danger & Caution Alert Color:</span><input type="color" id="theme-danger-button" value="#ef4444" oninput="applyCustomThemeFromPickers()"></label>
+                    <label class="picker-row"><span>✏️ Main Application Global Typography:</span><input type="color" id="theme-text-main" value="#0f172a" oninput="applyCustomThemeFromPickers()"></label>
+                    <label class="picker-row"><span>🏁 App Border Grids & Dividers:</span><input type="color" id="theme-accent-border" value="#cbd5e1" oninput="applyCustomThemeFromPickers()"></label>
+
+                    <div style="margin-top: 8px; border-top: 1px dashed #cbd5e1; padding-top: 8px;">
+                        <span style="font-weight: bold; display: block; margin-bottom: 4px;">🚀 Nature Presets Initializers:</span>
+                        <div style="display: flex; gap: 4px; flex-wrap: wrap;">
+                            <button onclick="loadThemePresetColors('#f0fdf4','#ffffff','#f1f5f9','#ffffff','#f8fafc','#e2e8f0','#0f172a','#16a34a','#ffffff','#16a34a','#0ea5e9','#ef4444','#0f172a','#cbd5e1')" style="background:#16a34a; padding:3px 6px; border-radius:4px; font-size:0.9em;">Forest Canopy</button>
+                            <button onclick="loadThemePresetColors('#fff7ed','#ffffff','#fef3c7','#ffffff','#fffbeb','#f59e0b','#ffffff','#ea580c','#ffffff','#ea580c','#d97706','#ef4444','#1e293b','#fcd34d')" style="background:#ea580c; padding:3px 6px; border-radius:4px; font-size:0.9em;">Autumn Grove</button>
+                            <button onclick="loadThemePresetColors('#f0f9ff','#ffffff','#e0f2fe','#ffffff','#f8fafc','#bae6fd','#0369a1','#0284c7','#ffffff','#0284c7','#0ea5e9','#ef4444','#0f172a','#93c5fd')" style="background:#0284c7; padding:3px 6px; border-radius:4px; font-size:0.9em;">Ocean Breeze</button>
+                            <button onclick="loadThemePresetColors('#fffb00','#ffffff('#000000','#ffffff','#000000','#333333','#ffffff','#fffb00','#000000','#fffb00','#0ea5e9','#ef4444','#000000','#cbd5e1')" style="background:#ca8a04; padding:3px 6px; border-radius:4px; font-size:0.9em;">Desert Sun</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="game-card-box">
+                <div class="game-title">✨ Avatar Accessories Studio</div>
+                <div style="font-size: 0.75em; display:flex; flex-direction:column; gap:6px; margin-top:4px;">
+                    <label style="display:flex; justify-content:space-between; align-items:center;">
+                        <span>🖼️ Profile Border Accessory:</span>
+                        <select id="setting-border-selector" onchange="updateProfileAccessories()" style="padding:2px; font-size:0.95em;">
+                            <option value="default">Standard Flat Border</option>
+                            <option value="forest">🌲 Deep Forest Trim</option>
+                            <option value="autumn">🍁 Autumn Gold Accent</option>
+                            <option value="ocean">🌊 Tidal Ocean Aura</option>
+                        </select>
+                    </label>
+                    <label style="display:flex; justify-content:space-between; align-items:center;">
+                        <span>🎏 Profile Corner Badge:</span>
+                        <select id="setting-flag-selector" onchange="updateProfileAccessories()" style="padding:2px; font-size:0.95em;">
+                            <option value="">No Corner Overlay</option>
+                            <option value="🍃">🍃 Green Leaf</option>
+                            <option value="🌊">🌊 Water Wave</option>
+                            <option value="🔥">🔥 Campfire Flame</option>
+                            <option value="✨">✨ Sparkles Magic</option>
+                        </select>
+                    </label>
+                </div>
+            </div>
+
+            <div class="game-card-box">
+                <div class="game-title">⚙️ App Configurations</div>
+                <div style="font-size: 0.75em; display:flex; flex-direction:column; gap:6px; margin-top:4px;">
+                    <label style="display:flex; justify-content:space-between; align-items:center;">
+                        <span>🔊 Chat Audio Alerts:</span>
+                        <input type="checkbox" id="setting-audio-toggle" checked>
+                    </label>
+                    <button onclick="clearChatHistoryCache()" style="background:var(--danger-button); width:100%; padding:4px; font-size:0.95em; border-radius:6px;">Clear Log Cache</button>
+                    <button onclick="clearSavedFriends()" style="background:#475569; width:100%; padding:4px; font-size:0.95em; border-radius:6px;">Clear All Contacts</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="app-container">
+    <div class="sidebar hidden-panel" id="app-sidebar-panel">
+        <div class="sidebar-section">
+            <div class="sidebar-header">👥 FRIENDS ROSTER</div>
+            <div class="entry-form">
+                <input type="text" id="friend-name-input" placeholder="Friend Name...">
+                <select id="friend-pronoun-select" style="display: none;">
+                    <option value=""></option>
+                </select>
+                <input type="text" id="friend-id-add-input" placeholder="Room ID...">
+                <button id="add-friend-btn" class="btn-action">Add Contact</button>
+            </div>
+            <div class="list-container" id="friend-list-container"></div>
+        </div>
+    </div>
+
+    <div class="workspace-split">
+        <div class="chat-main">
+            <div class="header">
+                <div class="header-top">
+                    <div class="header-main-title">
+                        <button class="panel-toggle-btn" id="toggle-sidebar-btn" onclick="toggleSidebarPanel()">▶ Friends</button>
+                        <span id="chat-title-text">🚀 AveryChat</span>
+                    </div>
+                    <div style="display: flex; gap: 4px; align-items: center;">
+                        <div id="typing-indicator" style="font-size: 0.7em; color: #16a34a; font-weight: bold; display: none;">typing...</div>
+                        <button class="settings-gear-btn" id="settings-trigger-button" onclick="toggleSettingsModal(true)" disabled>⚙️ <span>Studio</span></button>
+                        <button class="panel-toggle-btn" id="toggle-utilities-btn" onclick="toggleUtilitiesDrawer()">Utilities ▶</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="setup-box">
+                <div class="row">
+                    <div class="my-id-display" id="my-id-text">Initializing Secure Connection ID...</div>
+                </div>
+                <div class="row">
+                    <input type="text" id="friend-id-input" placeholder="Target Room Peer ID..." style="flex:1; padding:6px; border-radius:6px; border:1px solid var(--accent-border); min-width: 0;">
+                    <button id="connect-btn" class="btn-action">Link</button>
+                </div>
+            </div>
+
+            <div class="messages" id="message-box"></div>
+
+            <div style="background: #fef08a; padding: 6px 12px; font-size: 0.75em; display: flex; flex-direction: column; gap: 4px; border-top: 1px solid #e2e8f0; color: #0f172a;">
+                <div style="display: flex; align-items: center; gap: 6px; font-weight: bold;">
+                    <input type="checkbox" id="broken-keyboard-toggle" onchange="togglePermanentChaosMode(this)">
+                    <span>⚠️ Permanent Letter Elimination Mode</span>
+                </div>
+                <div id="chaos-eliminated-letters" style="font-style: italic; font-size: 0.9em; color: #b91c1c;">No letters eliminated yet.</div>
+            </div>
+
+            <div class="input-area">
                 <input type="file" id="file-attachment-input" style="display: none;" onchange="handleFileSelection(this)">
-                <button class="bar-btn" onclick="document.getElementById('file-attachment-input').click()">📎</button>
-                <input type="text" id="message-input" placeholder="Select a peer link to type..." disabled>
-                <button class="bar-btn" onclick="toggleGiphyPopover()">👾</button>
-                <button class="send-pill-btn" id="send-btn" onclick="sendMessage()" disabled>Send</button>
+                <button class="circle-btn" onclick="document.getElementById('file-attachment-input').click()" title="Send Image/File">📎</button>
+                <input type="text" id="message-input" placeholder="Type a message..." disabled>
+                <button class="circle-btn" id="giphy-toggle-btn" onclick="toggleGiphyPopover()" title="Search GIFs">👾</button>
+                <button id="send-btn" disabled>Send</button>
+
+                <div class="giphy-popover" id="giphy-popover-panel">
+                    <div class="giphy-header">
+                        <input type="text" id="giphy-search-box" class="giphy-search-input" placeholder="Search Tenor GIFs..." onkeyup="searchGiphyChannels()">
+                    </div>
+                    <div class="giphy-results" id="giphy-results-grid"></div>
+                </div>
             </div>
         </div>
 
-        <div class="side-panel-right">
-            <div class="section-card">
-                <div class="card-header-title">🎙️ Audio Voice Stream</div>
-                <div class="flex-row" style="margin-top:4px; align-items:center;">
-                    <button id="voice-call-start-btn" onclick="initializeVoiceCallStream()" class="btn-m" style="flex:1;">Start Call</button>
-                    <button id="voice-call-stop-btn" onclick="terminateVoiceCallStream()" class="btn-m" style="background:var(--danger-button);" disabled>End</button>
-                    <span id="voice-status-text" style="font-size:0.8em; font-weight:bold; color:#64748b;">Idle</span>
+        <div class="games-panel hidden-panel" id="games-panel-drawer">
+            <div class="games-header">⚙️ UTILITIES & PANELS</div>
+            
+            <div class="game-card-box" id="app-card-voice" style="border-left: 4px solid #16a34a;">
+                <div class="game-title">
+                    <span>🎙️ Audio Voice Chat</span>
+                    <button class="window-size-btn" id="zoom-btn-voice" onclick="toggleAppCardSizeMaximized('voice')">↗</button>
+                </div>
+                <div style="display:flex; gap:6px; margin-top:4px; align-items:center;">
+                    <button id="voice-call-start-btn" onclick="initializeVoiceCallStream()" style="background:#16a34a; flex:1; padding:6px; border-radius:6px;">Start Voice</button>
+                    <button id="voice-call-stop-btn" onclick="terminateVoiceCallStream()" style="background:#ef4444; padding:6px; border-radius:6px;" disabled>Disconnect</button>
+                    <span id="voice-status-text" style="font-size:0.7em; color:#64748b; font-weight:bold;">Voice Idle</span>
                 </div>
             </div>
 
-            <div class="section-card" style="flex: 1; min-height: 220px; display: flex; flex-direction: column;">
-                <div class="card-header-title">🌐 Sync Search Box</div>
-                <div class="flex-row" style="margin-top: 4px; margin-bottom: 6px;">
-                    <input type="text" id="browser-url-field" class="input-text-m" placeholder="Search criteria or link...">
-                    <button onclick="triggerSharedSearch(true)" class="btn-m">Go</button>
+            <div class="game-card-box" id="app-card-browser">
+                <div class="game-title">
+                    <span>🌐 Co-Browse Engine (Google)</span>
+                    <button class="window-size-btn" id="zoom-btn-browser" onclick="toggleAppCardSizeMaximized('browser')">↗</button>
                 </div>
-                <iframe id="google-iframe-frame" src="https://www.google.com/search?igu=1" style="width:100%; flex:1; border:1px solid var(--accent-border); border-radius:8px; background:white;"></iframe>
+                <div style="display:flex; gap:4px; margin-bottom: 2px;">
+                    <input type="text" id="browser-url-field" placeholder="Search or Type URL..." style="flex:1; font-size:0.75em; padding:4px; border:1px solid var(--accent-border); border-radius:4px; min-width: 0;">
+                    <button onclick="triggerSharedSearch(true)" style="background:#16a34a; padding:2px 8px; border-radius:6px;">Go</button>
+                </div>
+                <iframe id="google-iframe-frame" src="https://www.google.com/search?igu=1" style="width:100%; flex:1; min-height:160px; border:1px solid var(--accent-border); border-radius:6px; background:white;"></iframe>
             </div>
 
-            <div class="section-card">
-                <div class="card-header-title" style="display:flex; justify-content:between; align-items:center;">
-                    <span>🎮 Game Hub Playground</span>
-                    <select id="hub-game-selector" onchange="switchHubGameView()" style="margin-left:auto; font-size:0.85em; padding:2px;">
-                        <option value="maze">🧱 Strategy Maze</option>
-                        <option value="ttt">❌ Tic-Tac-Toe</option>
-                        <option value="c4">🔴 Connect Four</option>
-                    </select>
+            <div class="game-card-box" id="app-card-games" style="border-top: 2px solid #0ea5e9;">
+                <div class="game-title">
+                    <span>🎮 Multiplayer Game Hub</span>
+                    <div style="display:flex; align-items:center; gap:6px;">
+                        <select id="hub-game-selector" onchange="switchHubGameView()" style="font-size:0.85em; padding:2px;">
+                            <option value="maze">🧱 Strategy Maze</option>
+                            <option value="ttt">❌ Tic-Tac-Toe</option>
+                            <option value="c4">🔴 Connect Four</option>
+                        </select>
+                        <button class="window-size-btn" id="zoom-btn-games" onclick="toggleAppCardSizeMaximized('games')">↗</button>
+                    </div>
                 </div>
 
                 <div id="hub-view-maze" class="game-subview">
-                    <div id="maze-status" style="font-size:0.75em; color:#475569; margin-bottom:6px;">Navigate to opposite edges.</div>
-                    <div class="m-grid-5" id="maze-grid-canvas"></div>
-                    <div class="flex-row" style="margin-top:6px;">
-                        <button id="maze-mode-move" onclick="setMazeAction('MOVE')" class="btn-m" style="flex:1;">Move</button>
-                        <button id="maze-mode-wall" onclick="setMazeAction('WALL')" class="btn-m" style="background:#475569; flex:1;">Wall</button>
-                        <button onclick="resetMazeGame(true)" class="btn-m">Reset</button>
+                    <div id="maze-status" style="font-size:0.7em; color:#475569; margin-bottom:4px;">Maze Strategy: Navigate to the opposite edge.</div>
+                    <div class="maze-grid" id="maze-grid-canvas"></div>
+                    <div style="display:flex; gap:4px; margin-top:4px;">
+                        <button id="maze-mode-move" onclick="setMazeAction('MOVE')" style="background:#16a34a; flex:1; padding:4px; font-size:0.7em; border-radius:6px;">Move</button>
+                        <button id="maze-mode-wall" onclick="setMazeAction('WALL')" style="background:#475569; flex:1; padding:4px; font-size:0.7em; border-radius:6px;">Wall</button>
+                        <button onclick="resetMazeGame(true)" style="background:#16a34a; padding:4px 8px; font-size:0.7em; border-radius:6px;">Reset</button>
                     </div>
                 </div>
 
                 <div id="hub-view-ttt" class="game-subview" style="display:none;">
-                    <div id="ttt-status" style="font-size:0.75em; color:#475569; margin-bottom:6px;">Waiting turn sync...</div>
-                    <div class="m-grid-3" id="ttt-grid-canvas"></div>
-                    <button onclick="resetTttGame(true)" class="btn-m" style="width:100%; margin-top:6px;">Reset Grid</button>
+                    <div id="ttt-status" style="font-size:0.7em; color:#475569; margin-bottom:4px;">Tic-Tac-Toe turn status...</div>
+                    <div class="ttt-grid" id="ttt-grid-canvas"></div>
+                    <button onclick="resetTttGame(true)" style="background:#16a34a; width:100%; margin-top:4px; padding:4px; font-size:0.75em; border-radius:6px;">Reset Board</button>
                 </div>
 
                 <div id="hub-view-c4" class="game-subview" style="display:none;">
-                    <div id="c4-status" style="font-size:0.75em; color:#475569; margin-bottom:6px;">Waiting turn step...</div>
-                    <div class="m-grid-7" id="c4-grid-canvas"></div>
-                    <button onclick="resetC4Game(true)" class="btn-m" style="width:100%; margin-top:6px;">Reset Board</button>
+                    <div id="c4-status" style="font-size:0.7em; color:#475569; margin-bottom:4px;">Connect 4 status...</div>
+                    <div class="c4-grid" id="c4-grid-canvas"></div>
+                    <button onclick="resetC4Game(true)" style="background:#16a34a; width:100%; margin-top:4px; padding:4px; font-size:0.75em; border-radius:6px;">Reset Connect 4</button>
                 </div>
-            </div>
-
-            <div class="section-card">
-                <div class="card-header-title">🐱 Custom Emoji Studio Pack</div>
-                <div class="flex-row" style="margin-top:4px;">
-                    <input type="text" id="emoji-shortcode-input" class="input-text-m" placeholder="e.g. :catsmile:">
-                    <input type="file" id="emoji-file-input" accept="image/*" style="display:none;" onchange="processNewEmojiUpload(this)">
-                    <button onclick="document.getElementById('emoji-file-input').click()" class="btn-m" style="background:#475569;">Staging File</button>
-                </div>
-                <div id="my-emoji-tray" style="display:flex; gap:6px; flex-wrap:wrap; margin-top:6px;"></div>
-            </div>
-
-            <div class="section-card">
-                <div class="card-header-title">✨ Profile Customization Cosmetics</div>
-                <select id="setting-border-selector" onchange="updateProfileAccessories()" style="padding:6px; font-size:0.9em; width:100%; margin-bottom:6px;">
-                    <option value="default">Standard Flat Border</option>
-                    <option value="forest">🌲 Deep Forest Trim</option>
-                    <option value="autumn">🍁 Autumn Gold Accent</option>
-                    <option value="ocean">🌊 Tidal Ocean Aura</option>
-                </select>
-                <select id="setting-flag-selector" onchange="updateProfileAccessories()" style="padding:6px; font-size:0.9em; width:100%;">
-                    <option value="">No Corner Overlay Badge</option>
-                    <option value="🍃">🍃 Green Leaf</option>
-                    <option value="🌊">🌊 Water Wave</option>
-                    <option value="🔥">🔥 Campfire Flame</option>
-                    <option value="✨">✨ Sparkles Magic</option>
-                </select>
-            </div>
-
-            <div class="section-card">
-                <div class="card-header-title">⚠️ Chaos Modifier Modulators</div>
-                <label style="display:flex; align-items:center; gap:8px; font-size:0.85em;">
-                    <input type="checkbox" id="broken-keyboard-toggle" onchange="togglePermanentChaosMode(this)">
-                    <span>Permanent Letter Elimination Mode</span>
-                </label>
-                <button onclick="clearChatHistoryCache()" class="btn-m" style="background:var(--danger-button); width:100%; margin-top:6px;">Scrub Log Cache Storage</button>
             </div>
         </div>
-
     </div>
 </div>
 
@@ -266,14 +386,22 @@
     const messageBox = document.getElementById('message-box');
     const messageInput = document.getElementById('message-input');
     const sendBtn = document.getElementById('send-btn');
+    const connectBtn = document.getElementById('connect-btn');
     const friendIdInput = document.getElementById('friend-id-input');
     const myIdText = document.getElementById('my-id-text');
-    const appViewTitle = document.getElementById('app-view-title');
+    const chatTitleText = document.getElementById('chat-title-text');
+    const gamesPanelDrawer = document.getElementById('games-panel-drawer');
+    const appSidebarPanel = document.getElementById('app-sidebar-panel');
+    const friendNameInput = document.getElementById('friend-name-input');
+    const friendIdAddInput = document.getElementById('friend-id-add-input');
+    const addFriendBtn = document.getElementById('add-friend-btn');
+    const friendListContainer = document.getElementById('friend-list-container');
     const brokenKeyboardToggle = document.getElementById('broken-keyboard-toggle');
     const typingIndicator = document.getElementById('typing-indicator');
+    const settingsOverlayPanel = document.getElementById('settings-overlay-panel');
+    const settingsTriggerButton = document.getElementById('settings-trigger-button');
     const giphyPopoverPanel = document.getElementById('giphy-popover-panel');
     const giphyResultsGrid = document.getElementById('giphy-results-grid');
-    const friendListContainer = document.getElementById('friend-list-container');
 
     let peer = null, activeConnections = [];
     let currentTargetId = "", unreadCounters = {};
@@ -292,106 +420,97 @@
     let tttCells = Array(9).fill(""), myTttSymbol = "X", isTttTurn = true;
     let c4Grid = Array(42).fill(""), myC4Symbol = "R", isC4Turn = true;
 
+    // Permanent Letter Elimination Logic Arrays
     let availableAlphabetPool = [];
     let permanentlyEliminatedLetters = [];
     let chaosGameLoopIntervalId = null;
 
     function togglePermanentChaosMode(checkbox) {
-        const banner = document.getElementById('chaos-eliminated-banner');
+        const reportDiv = document.getElementById('chaos-eliminated-letters');
         if (checkbox.checked) {
             availableAlphabetPool = "abcdefghijklmnopqrstuvwxyz".split("");
             permanentlyEliminatedLetters = [];
-            banner.style.display = "block";
-            banner.innerText = "Eliminating letters shortly...";
+            reportDiv.innerText = "Eliminating letters shortly...";
+            
             eliminateOneRandomLetterPermanently();
-            chaosGameLoopIntervalId = setInterval(eliminateOneRandomLetterPermanently, 7000); 
+            
+            chaosGameLoopIntervalId = setInterval(() => {
+                eliminateOneRandomLetterPermanently();
+            }, 7000); 
         } else {
             clearInterval(chaosGameLoopIntervalId);
             chaosGameLoopIntervalId = null;
             availableAlphabetPool = [];
             permanentlyEliminatedLetters = [];
-            banner.style.display = "none";
+            reportDiv.innerText = "Mode deactivated. All letters recovered!";
         }
     }
 
     function eliminateOneRandomLetterPermanently() {
-        const banner = document.getElementById('chaos-eliminated-banner');
-        if (availableAlphabetPool.length === 0) { clearInterval(chaosGameLoopIntervalId); banner.innerText = "🚫 GAME OVER! All wiped!"; return; }
-        const index = Math.floor(Math.random() * availableAlphabetPool.length);
-        const letter = availableAlphabetPool.splice(index, 1)[0];
-        permanentlyEliminatedLetters.push(letter);
-        banner.innerText = `Banned Letters: [ ${permanentlyEliminatedLetters.join(" ").toUpperCase()} ]`;
+        const reportDiv = document.getElementById('chaos-eliminated-letters');
+        if (availableAlphabetPool.length === 0) {
+            clearInterval(chaosGameLoopIntervalId);
+            reportDiv.innerText = "🚫 GAME OVER! All 26 letters have been permanently scrubbed!";
+            return;
+        }
+        const randomIndex = Math.floor(Math.random() * availableAlphabetPool.length);
+        const droppedLetter = availableAlphabetPool.splice(randomIndex, 1)[0];
+        permanentlyEliminatedLetters.push(droppedLetter);
+        
+        reportDiv.innerText = `Banned Letters: [ ${permanentlyEliminatedLetters.join(" ").toUpperCase()} ]`;
+    }
+
+    function toggleAppCardSizeMaximized(appKey) {
+        const targetCard = document.getElementById(`app-card-${appKey}`);
+        const zoomBtn = document.getElementById(`zoom-btn-${appKey}`);
+        const allCards = ['voice', 'browser', 'games'];
+        
+        if (targetCard.classList.contains('maximized-app')) {
+            allCards.forEach(key => {
+                const card = document.getElementById(`app-card-${key}`);
+                card.classList.remove('maximized-app', 'minimized-sibling');
+                document.getElementById(`zoom-btn-${key}`).innerText = "↗";
+            });
+        } else {
+            allCards.forEach(key => {
+                const card = document.getElementById(`app-card-${key}`);
+                if (key === appKey) {
+                    card.classList.add('maximized-app');
+                    card.classList.remove('minimized-sibling');
+                    zoomBtn.innerText = "↙";
+                } else {
+                    card.classList.remove('maximized-app');
+                    card.classList.add('minimized-sibling');
+                }
+            });
+        }
     }
 
     function processNewEmojiUpload(input) {
         const file = input.files[0]; if(!file) return;
         const shortcode = document.getElementById('emoji-shortcode-input').value.trim();
-        if(!shortcode.startsWith(':') || !shortcode.endsWith(':')) { alert("Format must look like :code:"); return; }
-        
+        if(!shortcode.startsWith(':') || !shortcode.endsWith(':') || shortcode.length < 3) {
+            alert("Shortcode must start and end with a colon, like :smile:"); return;
+        }
         const reader = new FileReader();
         reader.onload = (e) => {
             customEmojis[shortcode] = e.target.result;
             localStorage.setItem('averychat_custom_emojis', JSON.stringify(customEmojis));
             document.getElementById('emoji-shortcode-input').value = '';
+            document.getElementById('emoji-preview-status').innerText = `Saved ${shortcode}!`;
             renderCustomEmojiTray();
-            activeConnections.forEach(conn => conn.send({ gameType: "EMOJI_SYNC", dictionary: customEmojis }));
+            activeConnections.forEach(conn => { conn.send({ gameType: "EMOJI_SYNC", dictionary: customEmojis }); });
         };
         reader.readAsDataURL(file);
-    }
-
-    // Standard desktop browser core logic rules
-    let mySavedId = localStorage.getItem('averychat_peer_id');
-    if (!mySavedId) { mySavedId = 'ave-' + Math.random().toString(16).slice(2, 6); localStorage.setItem('averychat_peer_id', mySavedId); }
-    const myAvatarString = `https://api.dicebear.com/7.x/bottts/svg?seed=${mySavedId}`;
-
-    renderFriendsList(); renderCustomEmojiTray(); startPeerEngine(mySavedId);
-
-    function startPeerEngine(chosenId) {
-        peer = new Peer(chosenId, { host: "averychat-peer-server.onrender.com", port: 443, path: "/peerjs", secure: true, debug: 1 });
-        peer.on('open', (id) => { myIdText.innerText = `Room Token ID: ${id}`; });
-        peer.on('connection', handleIncomingDataChannel);
-        peer.on('error', (err) => {
-            myIdText.innerText = `Error: ${err.type}`;
-            if (err.type === 'unavailable-id') {
-                const fallbackId = 'ave-' + Math.random().toString(16).slice(2, 6);
-                localStorage.setItem('averychat_peer_id', fallbackId);
-                startPeerEngine(fallbackId);
-            }
-        });
-        peer.on('call', (c) => { if(confirm("Accept incoming call stream?")) { navigator.mediaDevices.getUserMedia({ audio: true }).then((s) => { localMicrophoneAudioStream = s; c.answer(s); bindVoiceCallEvents(c); }); } });
-    }
-
-    function triggerManualPeerConnection() { const id = friendIdInput.value.trim().toLowerCase(); if (id) handleIncomingDataChannel(peer.connect(id)); }
-
-    function handleIncomingDataChannel(conn) {
-        if (activeConnections.some(c => c.peer === conn.peer)) return;
-        conn.on('open', () => { 
-            activeConnections.push(conn); unreadCounters[conn.peer] = 0; renderFriendsList(); 
-            if (!currentTargetId) { currentTargetId = conn.peer; enableInputLayout(); }
-            conn.send({ gameType: "EMOJI_SYNC", dictionary: customEmojis });
-        });
-        conn.on('data', (data) => {
-            if (data.gameType) { handleIncomingGamePacket(data, conn.peer); return; }
-            if (data.type === "STATUS_READ_NOTIFY") { const t = document.getElementById(`status-${data.msgId}`); if (t) t.innerText = "👁️ Read"; return; }
-            if (data.type === "TYPING_UPDATE") { if (conn.peer === currentTargetId) typingIndicator.style.display = data.typing ? "block" : "none"; return; }
-            
-            if (!chatHistories[conn.peer]) chatHistories[conn.peer] = [];
-            chatHistories[conn.peer].push({ ...data, direction: 'incoming' });
-            localStorage.setItem('averychat_history', JSON.stringify(chatHistories));
-
-            if (conn.peer === currentTargetId) {
-                rawAppendMessageWithAccessories(data, 'incoming', conn.peer);
-                conn.send({ type: "STATUS_READ_NOTIFY", msgId: data.id });
-            } else { unreadCounters[conn.peer] = (unreadCounters[conn.peer] || 0) + 1; renderFriendsList(); }
-        });
+        input.value = '';
     }
 
     function renderCustomEmojiTray() {
         const tray = document.getElementById('my-emoji-tray'); tray.innerHTML = '';
         Object.keys(customEmojis).forEach(code => {
             const wrap = document.createElement('div');
-            wrap.style = "display:flex; background:#f1f5f9; padding:4px; border-radius:4px; gap:2px; font-size:0.75em; align-items:center;";
-            wrap.innerHTML = `<img src="${customEmojis[code]}" style="width:18px; height:18px; object-fit:contain;"><span>${code}</span>`;
+            wrap.style = "display:flex; flex-direction:column; align-items:center; background:#f1f5f9; padding:4px; border-radius:4px; border:1px solid var(--accent-border);";
+            wrap.innerHTML = `<img src="${customEmojis[code]}" style="width:20px; height:20px; object-fit:contain;"><span style="font-size:0.65em; color:gray;">${code}</span>`;
             tray.appendChild(wrap);
         });
     }
@@ -400,11 +519,75 @@
         let cleanText = text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
         let activeDict = { ...customEmojis, ...(peerEmojiDictionaries[senderId] || {}) };
         Object.keys(activeDict).forEach(code => {
-            cleanText = cleanText.split(code).join(`<img src="${activeDict[code]}" class="custom-emoji-img" title="${code}">`);
+            const imgTag = `<img src="${activeDict[code]}" class="chat-custom-emoji" title="${code}">`;
+            cleanText = cleanText.split(code).join(imgTag);
         });
         return cleanText;
     }
 
+    function applyCustomThemeFromPickers() {
+        const styleTag = document.getElementById('theme-variable-styles');
+        styleTag.innerHTML = `
+            :root {
+                --body-bg: ${document.getElementById('theme-body-bg').value};
+                --container-bg: ${document.getElementById('theme-container-bg').value};
+                --sidebar-bg: ${document.getElementById('theme-sidebar-bg').value};
+                --chat-main-bg: ${document.getElementById('theme-chat-main-bg').value};
+                --header-bg: ${document.getElementById('theme-header-bg').value};
+                --msg-bg-incoming: ${document.getElementById('theme-msg-bg-incoming').value};
+                --msg-text-incoming: ${document.getElementById('theme-msg-text-incoming').value};
+                --msg-bg-outgoing: ${document.getElementById('theme-msg-bg-outgoing').value};
+                --msg-text-outgoing: ${document.getElementById('theme-msg-text-outgoing').value};
+                --primary-button: ${document.getElementById('theme-primary-button').value};
+                --action-button: ${document.getElementById('theme-action-button').value};
+                --danger-button: ${document.getElementById('theme-danger-button').value};
+                --text-main: ${document.getElementById('theme-text-main').value};
+                --accent-border: ${document.getElementById('theme-accent-border').value};
+            }
+        `;
+    }
+
+    function loadThemePresetColors(body, container, sidebar, chat, header, msgIn, msgInTxt, msgOut, msgOutTxt, primeBtn, actBtn, dngBtn, txt, border) {
+        document.getElementById('theme-body-bg').value = body;
+        document.getElementById('theme-container-bg').value = container;
+        document.getElementById('theme-sidebar-bg').value = sidebar;
+        document.getElementById('theme-chat-main-bg').value = chat;
+        document.getElementById('theme-header-bg').value = header;
+        document.getElementById('theme-msg-bg-incoming').value = msgIn;
+        document.getElementById('theme-msg-text-incoming').value = msgInTxt;
+        document.getElementById('theme-msg-bg-outgoing').value = msgOut;
+        document.getElementById('theme-msg-text-outgoing').value = msgOutTxt;
+        document.getElementById('theme-primary-button').value = primeBtn;
+        document.getElementById('theme-action-button').value = actBtn;
+        document.getElementById('theme-danger-button').value = dngBtn;
+        document.getElementById('theme-text-main').value = txt;
+        document.getElementById('theme-accent-border').value = border;
+        applyCustomThemeFromPickers();
+    }
+
+    function toggleSidebarPanel() {
+        const toggleBtn = document.getElementById('toggle-sidebar-btn');
+        if (appSidebarPanel.classList.contains('hidden-panel')) {
+            appSidebarPanel.classList.remove('hidden-panel');
+            toggleBtn.innerText = "◀ Friends";
+        } else {
+            appSidebarPanel.classList.add('hidden-panel');
+            toggleBtn.innerText = "▶ Friends";
+        }
+    }
+
+    function toggleUtilitiesDrawer() {
+        const toggleBtn = document.getElementById('toggle-utilities-btn');
+        if (gamesPanelDrawer.classList.contains('hidden-panel')) {
+            gamesPanelDrawer.classList.remove('hidden-panel');
+            toggleBtn.innerText = "Utilities ▶";
+        } else {
+            gamesPanelDrawer.classList.add('hidden-panel');
+            toggleBtn.innerText = "◀ Utilities";
+        }
+    }
+
+    function toggleSettingsModal(open) { settingsOverlayPanel.style.display = open ? 'flex' : 'none'; }
     function updateProfileAccessories() {
         activeBorderClass = "border-" + document.getElementById('setting-border-selector').value;
         activeCornerFlag = document.getElementById('setting-flag-selector').value;
@@ -414,17 +597,17 @@
         giphyPopoverPanel.style.display = giphyPopoverPanel.style.display === 'flex' ? 'none' : 'flex';
         if(giphyPopoverPanel.style.display === 'flex') searchGiphyChannels();
     }
-    
     function searchGiphyChannels() {
         const query = document.getElementById('giphy-search-box').value.trim();
         const searchTerm = query ? encodeURIComponent(query) : 'nature';
-        let url = `https://g.tenor.com/v1/search?q=${searchTerm}&key=LIVDTRZ9OR97&limit=8`;
+        let url = `https://g.tenor.com/v1/search?q=${searchTerm}&key=LIVDTRZ9OR97&limit=10`;
+        
         fetch(url).then(res => res.json()).then(json => {
             giphyResultsGrid.innerHTML = '';
-            if(json.results) {
+            if(json.results && json.results.length > 0) {
                 json.results.forEach(item => {
-                    let previewUrl = item.media_formats ? item.media_formats.tinygif.url : (item.media[0] ? item.media[0].tinygif.url : '');
-                    let fullUrl = item.media_formats ? item.media_formats.gif.url : (item.media[0] ? item.media[0].gif.url : '');
+                    let previewUrl = (item.media && item.media[0]) ? item.media[0].tinygif.url : (item.media_formats ? item.media_formats.tinygif.url : '');
+                    let fullUrl = (item.media && item.media[0]) ? item.media[0].gif.url : (item.media_formats ? item.media_formats.gif.url : '');
                     if (previewUrl && fullUrl) {
                         const img = document.createElement('img'); img.src = previewUrl;
                         img.onclick = () => { dispatchMediaPacket('GIF', fullUrl); toggleGiphyPopover(); };
@@ -438,8 +621,12 @@
     function handleFileSelection(input) {
         const file = input.files[0]; if(!file) return;
         const reader = new FileReader();
-        reader.onload = (e) => { dispatchMediaPacket(file.type.startsWith('image/') ? 'IMAGE' : 'FILE', e.target.result, file.name); };
+        reader.onload = (e) => {
+            const isImg = file.type.startsWith('image/');
+            dispatchMediaPacket(isImg ? 'IMAGE' : 'FILE', e.target.result, file.name);
+        };
         reader.readAsDataURL(file);
+        input.value = '';
     }
 
     function dispatchMediaPacket(mode, contentUrl, optionalName = '') {
@@ -468,9 +655,9 @@
     }
     function buildTttGridUI() {
         const canv = document.getElementById('ttt-grid-canvas'); canv.innerHTML = '';
-        document.getElementById('ttt-status').innerText = isTttTurn ? `Your turn (${myTttSymbol})` : "Waiting for peer...";
+        document.getElementById('ttt-status').innerText = tttCells.every(c => c === "") ? "Click 'Reset Board' to start!" : (isTttTurn ? `Your turn (${myTttSymbol})` : "Waiting for peer...");
         for(let i=0; i<9; i++) {
-            const cell = document.createElement('div'); cell.classList.add('ttt-cell-m'); cell.innerText = tttCells[i];
+            const cell = document.createElement('div'); cell.classList.add('ttt-cell'); cell.innerText = tttCells[i];
             cell.onclick = () => {
                 if(!isTttTurn || tttCells[i] !== "") return;
                 tttCells[i] = myTttSymbol; isTttTurn = false;
@@ -489,9 +676,9 @@
     }
     function buildC4GridUI() {
         const canv = document.getElementById('c4-grid-canvas'); canv.innerHTML = '';
-        document.getElementById('c4-status').innerText = isC4Turn ? `Your turn (${myC4Symbol==='R'?'Red':'Yellow'})` : "Waiting for peer...";
+        document.getElementById('c4-status').innerText = c4Grid.every(c => c === "") ? "Click 'Reset Connect 4' to start!" : (isC4Turn ? `Your turn (${myC4Symbol==='R'?'Red':'Yellow'})` : "Waiting for peer...");
         for(let i=0; i<42; i++) {
-            const cell = document.createElement('div'); cell.classList.add('c4-cell-m');
+            const cell = document.createElement('div'); cell.classList.add('c4-cell');
             if(c4Grid[i] === "R") cell.classList.add('p1'); if(c4Grid[i] === "Y") cell.classList.add('p2');
             cell.onclick = () => {
                 if(!isC4Turn) return;
@@ -522,7 +709,7 @@
         const canv = document.getElementById('maze-grid-canvas'); canv.innerHTML = "";
         document.getElementById('maze-status').innerText = isMazeTurn ? `Your turn! Mode: ${mazeCurrentAction}` : "Waiting for peer...";
         for(let i=0; i<25; i++) {
-            const cell = document.createElement('div'); cell.classList.add('maze-cell-m');
+            const cell = document.createElement('div'); cell.classList.add('maze-cell');
             if (mazeCells[i] === "WALL") { cell.classList.add('wall-block'); cell.innerText = "🧱"; }
             else if (i === mazeP1Pos) { cell.innerText = "🟢"; }
             else if (i === mazeP2Pos) { cell.innerText = "🔴"; }
@@ -559,7 +746,7 @@
             document.getElementById('voice-status-text').innerText = "🎙️ Connected";
             document.getElementById('incoming-voice-element').srcObject = rStream;
         });
-        call.on('close', terminateVoiceCallStream);
+        call.on('close', () => { terminateVoiceCallStream(); });
     }
     function terminateVoiceCallStream() {
         if(currentLocalVoiceCallInstance) { currentLocalVoiceCallInstance.close(); currentLocalVoiceCallInstance = null; }
@@ -567,7 +754,6 @@
         document.getElementById('incoming-voice-element').srcObject = null;
         document.getElementById('voice-call-start-btn').disabled = false;
         document.getElementById('voice-call-stop-btn').disabled = true;
-        document.getElementById('voice-status-text').innerText = "Idle";
     }
 
     function triggerSharedSearch(sendNotify = true) {
@@ -578,6 +764,7 @@
     }
 
     function clearChatHistoryCache() { chatHistories = {}; localStorage.removeItem('averychat_history'); messageBox.innerHTML = ''; }
+    function clearSavedFriends() { if (confirm("Delete all contacts?")) { savedFriends = []; localStorage.removeItem('averychat_friends'); renderFriendsList(); } }
 
     function handleIncomingGamePacket(data, senderId) {
         if (data.gameType === "EMOJI_SYNC") { peerEmojiDictionaries[senderId] = data.dictionary; }
@@ -590,10 +777,47 @@
         else if (data.gameType === "C4_UPDATE") { c4Grid = data.cells; isC4Turn = true; buildC4GridUI(); }
     }
 
+    let mySavedId = localStorage.getItem('averychat_peer_id');
+    if (!mySavedId) { mySavedId = 'avery-' + Math.random().toString(16).slice(2, 6); localStorage.setItem('averychat_peer_id', mySavedId); }
+    const myAvatarString = `https://api.dicebear.com/7.x/bottts/svg?seed=${mySavedId}`;
+    
+    renderFriendsList(); renderCustomEmojiTray(); startPeerEngine(mySavedId);
+
+    function startPeerEngine(chosenId) {
+        peer = new Peer(chosenId, { host: "averychat-peer-server.onrender.com", port: 443, path: "/peerjs", secure: true });
+        peer.on('open', (id) => { myIdText.innerText = `Room Network ID Token: ${id}`; });
+        peer.on('connection', handleIncomingDataChannel);
+        peer.on('call', (c) => { if(confirm("Accept incoming voice stream?")) { navigator.mediaDevices.getUserMedia({ audio: true }).then((s) => { localMicrophoneAudioStream = s; c.answer(s); bindVoiceCallEvents(c); }); } });
+    }
+
+    connectBtn.addEventListener('click', () => { const id = friendIdInput.value.trim().toLowerCase(); if (id) handleIncomingDataChannel(peer.connect(id)); });
+
+    function handleIncomingDataChannel(conn) {
+        if (activeConnections.some(c => c.peer === conn.peer)) return;
+        conn.on('open', () => { 
+            activeConnections.push(conn); unreadCounters[conn.peer] = 0; renderFriendsList(); 
+            if (!currentTargetId) { currentTargetId = conn.peer; enableInputLayout(); }
+            conn.send({ gameType: "EMOJI_SYNC", dictionary: customEmojis });
+        });
+        conn.on('data', (data) => {
+            if (data.gameType) { handleIncomingGamePacket(data, conn.peer); return; }
+            if (data.type === "STATUS_READ_NOTIFY") { const t = document.getElementById(`status-${data.msgId}`); if (t) t.innerText = "👁️ Read"; return; }
+            if (data.type === "TYPING_UPDATE") { if (conn.peer === currentTargetId) typingIndicator.style.display = data.typing ? "block" : "none"; return; }
+            
+            if (!chatHistories[conn.peer]) chatHistories[conn.peer] = [];
+            chatHistories[conn.peer].push({ ...data, direction: 'incoming' });
+            localStorage.setItem('averychat_history', JSON.stringify(chatHistories));
+
+            if (conn.peer === currentTargetId) {
+                rawAppendMessageWithAccessories(data, 'incoming', conn.peer);
+                conn.send({ type: "STATUS_READ_NOTIFY", msgId: data.id });
+            } else { unreadCounters[conn.peer] = (unreadCounters[conn.peer] || 0) + 1; renderFriendsList(); }
+        });
+    }
+
     function enableInputLayout() {
-        messageInput.disabled = false; sendBtn.disabled = false;
-        messageInput.placeholder = "Type clear message stream...";
-        appViewTitle.innerText = `AveryChat Console Connected -> ${currentTargetId}`;
+        messageInput.disabled = false; sendBtn.disabled = false; settingsTriggerButton.disabled = false;
+        gamesPanelDrawer.style.opacity = "1"; gamesPanelDrawer.style.pointerEvents = "auto";
         setTimeout(() => { switchHubGameView(); }, 200);
     }
 
@@ -606,9 +830,15 @@
 
     function sendMessage() {
         let text = messageInput.value.trim(); if (!text) return;
+        
+        // Permanent Elimination Filter Loop
         if (brokenKeyboardToggle.checked && permanentlyEliminatedLetters.length > 0) {
-            permanentlyEliminatedLetters.forEach(l => { text = text.replace(new RegExp(l, 'gi'), ""); });
+            permanentlyEliminatedLetters.forEach(letter => {
+                const regex = new RegExp(letter, 'gi');
+                text = text.replace(regex, "");
+            });
         }
+
         const msgId = 'msg-' + Math.random().toString(36).slice(2, 9);
         const packet = { type: "TEXT", id: msgId, text, avatar: myAvatarString, borderStyle: activeBorderClass, flagIcon: activeCornerFlag };
         
@@ -619,23 +849,26 @@
 
         rawAppendMessageWithAccessories(packet, 'outgoing', "You"); messageInput.value = '';
     }
+    sendBtn.addEventListener('click', sendMessage);
+    messageInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendMessage(); });
 
     function rawAppendMessageWithAccessories(packet, direction, sender) {
         const g = document.createElement('div'); g.classList.add('message-group', direction);
-        const metaStr = direction === 'outgoing' ? `<div class="meta-text" id="status-${packet.id}">✓ Sent</div>` : '';
+        const metaStr = direction === 'outgoing' ? `<div class="status-meta-text" id="status-${packet.id}">✓ Sent</div>` : '';
         
         let parsedBody = (packet.type === 'TEXT') ? parseTextShortcodes(packet.text, direction === 'outgoing' ? 'me' : currentTargetId) : packet.text;
-        let contentMarkup = `<div class="bubble">${parsedBody}</div>`;
+        let contentMarkup = `<div class="message">${parsedBody}</div>`;
         
-        if (packet.type === 'GIF' || packet.type === 'IMAGE') contentMarkup = `<div class="bubble"><img src="${packet.text}"></div>`;
-        else if (packet.type === 'FILE') contentMarkup = `<div class="bubble">📂 <a href="${packet.text}" download="${packet.fileName}" style="color:inherit;font-weight:bold;">File Link</a></div>`;
+        if (packet.type === 'GIF') contentMarkup = `<div class="message"><img class="chat-gif" src="${packet.text}"></div>`;
+        else if (packet.type === 'IMAGE') contentMarkup = `<div class="message"><img class="chat-image" src="${packet.text}"></div>`;
+        else if (packet.type === 'FILE') contentMarkup = `<div class="message"><div class="file-attachment-box">📂 <a href="${packet.text}" download="${packet.fileName}" style="color:inherit;font-weight:bold;">Download ${packet.fileName}</a></div></div>`;
 
         g.innerHTML = `
-            <div class="sender-label">${sender}</div>
-            <div class="msg-row ${direction}">
-                <div class="avatar-wrap">
-                    <img class="avatar-img ${packet.borderStyle || 'border-default'}" src="${packet.avatar}">
-                    ${packet.flagIcon ? `<span class="badge-icon">${packet.flagIcon}</span>` : ''}
+            <div class="sender-name-label">${sender}</div>
+            <div class="message-row ${direction}">
+                <div class="avatar-container-wrapper">
+                    <img class="avatar ${packet.borderStyle || 'border-default'}" src="${packet.avatar}">
+                    ${packet.flagIcon ? `<span class="flag-badge">${packet.flagIcon}</span>` : ''}
                 </div>
                 ${contentMarkup}
             </div>
@@ -644,37 +877,31 @@
         messageBox.appendChild(g); messageBox.scrollTop = messageBox.scrollHeight;
     }
 
-    function addNewRosterFriend() {
-        const name = document.getElementById('friend-name-input').value.trim();
-        const id = document.getElementById('friend-id-add-input').value.trim().toLowerCase();
-        if (name && id) {
-            savedFriends.push({ name, id });
-            localStorage.setItem('averychat_friends', JSON.stringify(savedFriends));
-            document.getElementById('friend-name-input').value = '';
-            document.getElementById('friend-id-add-input').value = '';
-            renderFriendsList();
-        }
-    }
+    addFriendBtn.addEventListener('click', () => {
+        const name = friendNameInput.value.trim(), id = friendIdAddInput.value.trim().toLowerCase();
+        if (name && id) { savedFriends.push({ name, id }); localStorage.setItem('averychat_friends', JSON.stringify(savedFriends)); renderFriendsList(); }
+    });
 
     function renderFriendsList() {
         friendListContainer.innerHTML = '';
         savedFriends.forEach(f => {
-            const d = document.createElement('div'); d.classList.add('list-item-m'); if (f.id === currentTargetId) d.classList.add('active');
-            const unread = unreadCounters[f.id] || 0;
-            d.innerHTML = `<span>${f.name} (${f.id})</span>${unread > 0 ? `<span style="background:red; color:white; border-radius:10px; padding:2px 6px; font-size:0.75em;">${unread}</span>` : ''}`;
+            const d = document.createElement('div'); d.classList.add('list-item'); if (f.id === currentTargetId) d.classList.add('active-chat');
+            const bCount = unreadCounters[f.id] || 0;
+            d.innerHTML = `<div style="display:flex; flex-direction:column;"><span style="font-size:0.8em; font-weight:bold;">${f.name}</span></div>${bCount>0?`<span class=\"unread-count-badge\">${bCount}</span>`:''}`;
             d.onclick = () => {
-                currentTargetId = f.id; unreadCounters[f.id] = 0; renderFriendsList();
+                currentTargetId = f.id; chatTitleText.innerText = f.name; unreadCounters[f.id] = 0; renderFriendsList();
                 messageBox.innerHTML = ''; enableInputLayout();
                 
                 let freshHistory = JSON.parse(localStorage.getItem('averychat_history')) || {};
                 chatHistories[f.id] = freshHistory[f.id] || [];
-                chatHistories[f.id].forEach(m => rawAppendMessageWithAccessories(m, m.direction, m.direction === 'outgoing' ? 'You' : f.name));
                 
+                chatHistories[f.id].forEach(m => { rawAppendMessageWithAccessories(m, m.direction, m.direction === 'outgoing' ? 'You' : f.name); });
                 const conn = activeConnections.find(c => c.peer === f.id);
                 if (conn) {
                     conn.send({ gameType: "EMOJI_SYNC", dictionary: customEmojis });
-                    chatHistories[f.id].forEach(m => { if (m.direction === 'incoming') conn.send({ type: "STATUS_READ_NOTIFY", msgId: m.id }); });
+                    if (chatHistories[f.id]) chatHistories[f.id].forEach(m => { if (m.direction === 'incoming') conn.send({ type: "STATUS_READ_NOTIFY", msgId: m.id }); });
                 }
+                if(window.innerWidth <= 768) toggleSidebarPanel();
             };
             friendListContainer.appendChild(d);
         });
