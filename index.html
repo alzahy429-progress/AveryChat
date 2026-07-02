@@ -695,8 +695,9 @@
 
     function startPeerEngine(chosenId) {
         peer = new Peer(chosenId, {
-            host: "peerjs-server.herokuapp.com",
+            host: "averychat-peer-server.onrender.com",
             port: 443,
+            path: "/peerjs",
             secure: true
         });
         peer.on('open', (id) => { myIdText.innerText = `Room Network ID Token: ${id}`; });
