@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AveryChat</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>AveryChat Studio</title>
     <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
     
     <style id="theme-variable-styles">
@@ -27,9 +27,9 @@
     
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: var(--body-bg); display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; color: var(--text-main); transition: background 0.3s; }
-        .app-container { width: 1380px; height: 880px; background: var(--container-bg); border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); display: flex; overflow: hidden; border: 1px solid var(--accent-border); position: relative; }
+        .app-container { width: 1380px; max-width: 100%; height: 880px; max-height: 100vh; background: var(--container-bg); border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); display: flex; overflow: hidden; border: 1px solid var(--accent-border); position: relative; }
         
-        .sidebar { width: 260px; background: var(--sidebar-bg); border-right: 1px solid var(--accent-border); display: flex; flex-direction: column; transition: width 0.3s ease, min-width 0.3s ease, opacity 0.3s ease; overflow: hidden; }
+        .sidebar { width: 260px; background: var(--sidebar-bg); border-right: 1px solid var(--accent-border); display: flex; flex-direction: column; transition: transform 0.3s ease, width 0.3s ease, opacity 0.3s ease; overflow: hidden; }
         .sidebar.hidden-panel { width: 0px; min-width: 0px; opacity: 0; border-right: none; }
         
         .sidebar-section { flex: 1; display: flex; flex-direction: column; overflow: hidden; width: 260px; }
@@ -45,14 +45,21 @@
         .unread-count-badge { background: var(--danger-button); color: white; font-size: 0.7em; font-weight: bold; padding: 2px 6px; border-radius: 10px; margin-left: auto; }
 
         .workspace-split { flex: 1; display: flex; background: var(--chat-main-bg); overflow: hidden; position: relative; }
-        .chat-main { flex: 1; display: flex; flex-direction: column; border-right: 1px solid var(--accent-border); overflow: hidden; position: relative; }
+        .chat-main { flex: 1; display: flex; flex-direction: column; border-right: 1px solid var(--accent-border); overflow: hidden; position: relative; width: 100%; }
         
-        .games-panel { width: 460px; background: var(--sidebar-bg); display: flex; flex-direction: column; overflow-y: auto; border-left: 1px solid var(--accent-border); padding: 10px; gap: 10px; transition: width 0.3s ease, min-width 0.3s ease, opacity 0.3s ease, padding 0.3s ease; }
+        .games-panel { width: 460px; background: var(--sidebar-bg); display: flex; flex-direction: column; overflow-y: auto; border-left: 1px solid var(--accent-border); padding: 10px; gap: 10px; transition: transform 0.3s ease, width 0.3s ease, opacity 0.3s ease, padding 0.3s ease; box-sizing: border-box; }
         .games-panel.hidden-panel { width: 0px; min-width: 0px; opacity: 0; padding: 0px; border-left: none; }
         
-        .games-header { font-size: 0.85em; font-weight: bold; color: var(--text-main); text-align: center; padding-bottom: 6px; border-bottom: 2px dashed var(--accent-border); letter-spacing: 0.05em; width: 440px; }
-        .game-card-box { background: #ffffff; border: 1px solid var(--accent-border); border-radius: 10px; padding: 10px; display: flex; flex-direction: column; gap: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.02); color: #0f172a; width: 420px; box-sizing: border-box; }
+        .games-header { font-size: 0.85em; font-weight: bold; color: var(--text-main); text-align: center; padding-bottom: 6px; border-bottom: 2px dashed var(--accent-border); letter-spacing: 0.05em; width: 100%; box-sizing: border-box; }
+        
+        /* Flex growth behavior for window utility boxes */
+        .game-card-box { background: #ffffff; border: 1px solid var(--accent-border); border-radius: 10px; padding: 10px; display: flex; flex-direction: column; gap: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.02); color: #0f172a; width: 100%; box-sizing: border-box; transition: all 0.3s ease-in-out; }
+        .game-card-box.maximized-app { flex: 1; min-height: 380px; }
+        .game-card-box.minimized-sibling { display: none !important; }
+
         .game-title { font-size: 0.8em; font-weight: 700; color: #0f172a; display: flex; justify-content: space-between; align-items: center; }
+        .window-size-btn { background: transparent; color: #64748b; border: none; cursor: pointer; padding: 2px 6px; font-size: 1.1em; font-weight: bold; border-radius: 4px; }
+        .window-size-btn:hover { background: #cbd5e1; }
         
         .maze-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; background: var(--accent-border); padding: 4px; border-radius: 6px; }
         .maze-cell { height: 38px; background: white; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.1em; font-weight: bold; user-select: none; border-radius: 4px; }
@@ -66,15 +73,15 @@
         .c4-cell.p1 { background: #ef4444; }
         .c4-cell.p2 { background: #f59e0b; }
 
-        .header { background: var(--header-bg); padding: 10px 16px; display: flex; flex-direction: column; border-bottom: 1px solid var(--accent-border); }
+        .header { background: var(--header-bg); padding: 10px 12px; display: flex; flex-direction: column; border-bottom: 1px solid var(--accent-border); }
         .header-top { display: flex; justify-content: space-between; align-items: center; width: 100%; }
-        .header-main-title { font-size: 1em; font-weight: 700; color: var(--text-main); display: flex; align-items: center; gap: 8px; }
+        .header-main-title { font-size: 0.95em; font-weight: 700; color: var(--text-main); display: flex; align-items: center; gap: 6px; }
         
-        .setup-box { background: var(--sidebar-bg); padding: 10px 16px; border-bottom: 1px solid var(--accent-border); font-size: 0.8em; display: flex; flex-direction: column; gap: 6px; }
+        .setup-box { background: var(--sidebar-bg); padding: 10px 12px; border-bottom: 1px solid var(--accent-border); font-size: 0.8em; display: flex; flex-direction: column; gap: 6px; }
         .row { display: flex; gap: 6px; align-items: center; }
-        .messages { flex: 1; padding: 16px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; background: var(--chat-main-bg); }
+        .messages { flex: 1; padding: 12px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; background: var(--chat-main-bg); }
         
-        .message-group { display: flex; flex-direction: column; max-width: 75%; }
+        .message-group { display: flex; flex-direction: column; max-width: 85%; }
         .message-group.incoming { align-self: flex-start; align-items: flex-start; }
         .message-group.outgoing { align-self: flex-end; align-items: flex-end; }
         
@@ -95,8 +102,9 @@
         .message-row.outgoing { flex-direction: row-reverse; }
 
         .message { padding: 8px 12px; border-radius: 14px; word-wrap: break-word; font-size: 0.85em; line-height: 1.4; box-shadow: 0 1px 2px rgba(0,0,0,0.03); max-width: 100%; }
-        .message img.chat-gif { max-width: 240px; border-radius: 8px; display: block; margin-top: 4px; }
-        .message img.chat-image { max-width: 280px; max-height: 240px; border-radius: 8px; display: block; margin-top: 4px; }
+        .message img.chat-gif { max-width: 100%; border-radius: 8px; display: block; margin-top: 4px; }
+        .message img.chat-image { max-width: 100%; max-height: 240px; border-radius: 8px; display: block; margin-top: 4px; }
+        .chat-custom-emoji { width: 24px; height: 24px; object-fit: contain; vertical-align: middle; display: inline-block; margin: 0 2px; }
         .file-attachment-box { display: flex; align-items: center; gap: 8px; background: rgba(0,0,0,0.05); padding: 6px 12px; border-radius: 8px; margin-top: 4px; }
 
         .message-group.incoming .message { background: var(--msg-bg-incoming); color: var(--msg-text-incoming); border-bottom-left-radius: 4px; border: 1px solid var(--accent-border); }
@@ -104,36 +112,46 @@
         .status-meta-text { font-size: 0.62em; color: #94a3b8; font-weight: bold; margin-top: 2px; text-transform: uppercase; }
 
         .input-area { display: flex; padding: 10px; background: var(--header-bg); border-top: 1px solid var(--accent-border); gap: 6px; align-items: center; position: relative; }
-        .input-area input[type="text"] { flex: 1; padding: 8px 16px; background: #ffffff; border: 1px solid var(--accent-border); border-radius: 20px; outline: none; font-size: 0.85em; color: #0f172a; }
+        .input-area input[type="text"] { flex: 1; padding: 8px 14px; background: #ffffff; border: 1px solid var(--accent-border); border-radius: 20px; outline: none; font-size: 0.85em; color: #0f172a; min-width: 0; }
         
-        .circle-btn { width: 34px; height: 34px; border-radius: 50%; padding: 0; display: flex; align-items: center; justify-content: center; font-size: 1em; background: #e2e8f0; color: #475569; border: none; cursor: pointer; }
+        .circle-btn { width: 34px; height: 34px; border-radius: 50%; padding: 0; display: flex; align-items: center; justify-content: center; font-size: 1em; background: #e2e8f0; color: #475569; border: none; cursor: pointer; flex-shrink: 0; }
         button, .btn-style { color: white; border: none; padding: 6px 12px; border-radius: 14px; cursor: pointer; font-weight: 700; font-size: 0.78em; transition: opacity 0.2s; }
         button:hover { opacity: 0.9; }
-        #send-btn { background: var(--primary-button); border-radius: 20px; padding: 8px 16px; }
+        #send-btn { background: var(--primary-button); border-radius: 20px; padding: 8px 14px; flex-shrink: 0; }
         .btn-action { background: var(--action-button); }
         button:disabled, input:disabled, select:disabled { opacity: 0.35; cursor: not-allowed; pointer-events: none; }
-        .my-id-display { font-size: 0.78em; color: #475569; background: #e2e8f0; padding: 6px 12px; border-radius: 14px; font-weight: bold; flex: 1; text-align: center; }
+        .my-id-display { font-size: 0.75em; color: #475569; background: #e2e8f0; padding: 6px 10px; border-radius: 14px; font-weight: bold; flex: 1; text-align: center; word-break: break-all; }
         
         .pronoun-tag { font-size: 0.75em; color: #64748b; background: #e2e8f0; padding: 1px 5px; border-radius: 4px; margin-left: 4px; font-weight: normal; }
-        .panel-toggle-btn { background: #cbd5e1; color: #475569; padding: 4px 8px; border-radius: 6px; font-size: 0.85em; font-weight: bold; border: none; cursor: pointer; }
+        .panel-toggle-btn { background: #cbd5e1; color: #475569; padding: 4px 8px; border-radius: 6px; font-size: 0.8em; font-weight: bold; border: none; cursor: pointer; }
         .panel-toggle-btn:hover { background: #94a3b8; }
 
-        .giphy-popover { display: none; position: absolute; bottom: 55px; right: 80px; width: 300px; height: 380px; background: #ffffff; border: 1px solid var(--accent-border); border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.15); z-index: 2000; flex-direction: column; overflow: hidden; }
+        .giphy-popover { display: none; position: absolute; bottom: 55px; right: 10px; width: 280px; height: 320px; background: #ffffff; border: 1px solid var(--accent-border); border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.15); z-index: 2000; flex-direction: column; overflow: hidden; }
         .giphy-header { padding: 8px; background: #f1f5f9; display: flex; gap: 4px; border-bottom: 1px solid var(--accent-border); }
         .giphy-search-input { flex: 1; padding: 4px 8px; font-size: 0.8em; border: 1px solid var(--accent-border); border-radius: 6px; outline: none; }
         .giphy-results { flex: 1; overflow-y: auto; display: grid; grid-template-columns: repeat(2, 1fr); gap: 4px; padding: 6px; background: #f8fafc; }
         .giphy-results img { width: 100%; height: 90px; object-fit: cover; border-radius: 4px; cursor: pointer; transition: transform 0.1s; }
         .giphy-results img:hover { transform: scale(1.03); }
 
-        .settings-overlay { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.6); z-index: 1000; justify-content: center; align-items: center; backdrop-filter: blur(4px); }
-        .settings-modal { background: #ffffff; width: 460px; border-radius: 14px; border: 1px solid var(--accent-border); box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); overflow: hidden; display: flex; flex-direction: column; }
+        .settings-overlay { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.6); z-index: 3000; justify-content: center; align-items: center; backdrop-filter: blur(4px); padding: 10px; box-sizing: border-box; }
+        .settings-modal { background: #ffffff; width: 460px; max-width: 100%; border-radius: 14px; border: 1px solid var(--accent-border); box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); overflow: hidden; display: flex; flex-direction: column; max-height: 90vh; }
         .settings-modal-header { padding: 12px 16px; background: #f1f5f9; border-bottom: 1px solid var(--accent-border); display: flex; justify-content: space-between; align-items: center; font-weight: bold; font-size: 0.9em; color: #0f172a; }
-        .settings-modal-body { padding: 16px; display: flex; flex-direction: column; gap: 12px; overflow-y: auto; max-height: 600px; }
+        .settings-modal-body { padding: 16px; display: flex; flex-direction: column; gap: 12px; overflow-y: auto; }
         .close-settings-btn { background: transparent; color: #64748b; font-size: 1.2em; cursor: pointer; border: none; padding: 0; font-weight: bold; }
-        .settings-gear-btn { background: #e2e8f0; color: #475569; padding: 6px 10px; border-radius: 8px; font-size: 0.85em; font-weight: bold; display: flex; align-items: center; gap: 4px; border: none; cursor: pointer; }
+        .settings-gear-btn { background: #e2e8f0; color: #475569; padding: 6px 10px; border-radius: 8px; font-size: 0.8em; font-weight: bold; display: flex; align-items: center; gap: 4px; border: none; cursor: pointer; }
         
         .picker-row { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 4px; font-size: 0.95em; }
         .picker-row input[type="color"] { border: none; width: 40px; height: 24px; padding: 0; border-radius: 4px; cursor: pointer; background: transparent; }
+
+        @media (max-width: 768px) {
+            body { padding: 0; height: 100vh; width: 100vw; overflow: hidden; }
+            .app-container { width: 100vw; height: 100vh; max-height: 100vh; border-radius: 0; border: none; }
+            .sidebar { position: absolute; left: 0; top: 0; height: 100%; z-index: 1000; width: 280px; box-shadow: 5px 0 15px rgba(0,0,0,0.1); transform: translateX(0); }
+            .sidebar.hidden-panel { transform: translateX(-100%); width: 280px; opacity: 1; }
+            .games-panel { position: absolute; right: 0; top: 0; height: 100%; z-index: 1000; width: 100vw; max-width: 320px; box-shadow: -5px 0 15px rgba(0,0,0,0.1); transform: translateX(0); }
+            .games-panel.hidden-panel { transform: translateX(100%); width: 320px; opacity: 1; padding: 10px !important; }
+            .settings-gear-btn span { display: none; }
+        }
     </style>
 </head>
 <body>
@@ -143,78 +161,48 @@
 <div class="settings-overlay" id="settings-overlay-panel">
     <div class="settings-modal">
         <div class="settings-modal-header">
-            <span>⚙️ AveryChat Settings & Theme Studio</span>
+            <span>⚙️ AveryChat Settings & Studio</span>
             <button class="close-settings-btn" onclick="toggleSettingsModal(false)">&times;</button>
         </div>
         <div class="settings-modal-body">
             
+            <div class="game-card-box" style="border-top: 3px solid #3b82f6;">
+                <div class="game-title">🐱 Custom Emoji Studio</div>
+                <div style="font-size: 0.75em; display:flex; flex-direction:column; gap:6px; margin-top:4px;">
+                    <div style="display:flex; gap:4px;">
+                        <input type="text" id="emoji-shortcode-input" placeholder="e.g. :catsmile:" style="flex:1; padding:4px; border-radius:4px; border:1px solid var(--accent-border);">
+                        <input type="file" id="emoji-file-input" accept="image/*" style="display:none;" onchange="processNewEmojiUpload(this)">
+                        <button onclick="document.getElementById('emoji-file-input').click()" style="background:#475569; padding:4px 8px; border-radius:4px;">Choose Image</button>
+                    </div>
+                    <div id="emoji-preview-status" style="color:gray; font-style:italic;">No image staged</div>
+                    <div id="my-emoji-tray" style="display:flex; gap:6px; flex-wrap:wrap; margin-top:4px; padding-top:4px; border-top:1px dashed var(--accent-border);"></div>
+                </div>
+            </div>
+
             <div class="game-card-box" style="border-top: 3px solid #10b981;">
-                <div class="game-title">🎨 Real-time Advanced Canvas Theme Builder</div>
+                <div class="game-title">🎨 Real-time Canvas Theme Builder</div>
                 <div style="font-size: 0.75em; display:flex; flex-direction:column; gap:4px; margin-top:6px;">
-                    
-                    <label class="picker-row">
-                        <span>🌌 Application Outer Background:</span>
-                        <input type="color" id="theme-body-bg" value="#f8fafc" oninput="applyCustomThemeFromPickers()">
-                    </label>
-                    <label class="picker-row">
-                        <span>📦 Main Containers Panel BG:</span>
-                        <input type="color" id="theme-container-bg" value="#ffffff" oninput="applyCustomThemeFromPickers()">
-                    </label>
-                    <label class="picker-row">
-                        <span>📁 Sidebars & Drawers BG:</span>
-                        <input type="color" id="theme-sidebar-bg" value="#f1f5f9" oninput="applyCustomThemeFromPickers()">
-                    </label>
-                    <label class="picker-row">
-                        <span>💬 Message Stream Grid Background:</span>
-                        <input type="color" id="theme-chat-main-bg" value="#ffffff" oninput="applyCustomThemeFromPickers()">
-                    </label>
-                    <label class="picker-row">
-                        <span>🗂️ Header & Action Toolbars BG:</span>
-                        <input type="color" id="theme-header-bg" value="#f8fafc" oninput="applyCustomThemeFromPickers()">
-                    </label>
-                    <label class="picker-row">
-                        <span>📥 Incoming Message Capsule BG:</span>
-                        <input type="color" id="theme-msg-bg-incoming" value="#e2e8f0" oninput="applyCustomThemeFromPickers()">
-                    </label>
-                    <label class="picker-row">
-                        <span>🔤 Incoming Message Text Color:</span>
-                        <input type="color" id="theme-msg-text-incoming" value="#0f172a" oninput="applyCustomThemeFromPickers()">
-                    </label>
-                    <label class="picker-row">
-                        <span>📤 Outgoing Message Capsule BG:</span>
-                        <input type="color" id="theme-msg-bg-outgoing" value="#2563eb" oninput="applyCustomThemeFromPickers()">
-                    </label>
-                    <label class="picker-row">
-                        <span>🔤 Outgoing Message Text Color:</span>
-                        <input type="color" id="theme-msg-text-outgoing" value="#ffffff" oninput="applyCustomThemeFromPickers()">
-                    </label>
-                    <label class="picker-row">
-                        <span>🔵 Primary Button Base Accent:</span>
-                        <input type="color" id="theme-primary-button" value="#2563eb" oninput="applyCustomThemeFromPickers()">
-                    </label>
-                    <label class="picker-row">
-                        <span>🟢 Success Action Button Fill:</span>
-                        <input type="color" id="theme-action-button" value="#10b981" oninput="applyCustomThemeFromPickers()">
-                    </label>
-                    <label class="picker-row">
-                        <span>🔴 Danger & Caution Alert Color:</span>
-                        <input type="color" id="theme-danger-button" value="#ef4444" oninput="applyCustomThemeFromPickers()">
-                    </label>
-                    <label class="picker-row">
-                        <span>✏️ Main Application Global Typography:</span>
-                        <input type="color" id="theme-text-main" value="#0f172a" oninput="applyCustomThemeFromPickers()">
-                    </label>
-                    <label class="picker-row">
-                        <span>🏁 App Border Grids & Dividers:</span>
-                        <input type="color" id="theme-accent-border" value="#cbd5e1" oninput="applyCustomThemeFromPickers()">
-                    </label>
+                    <label class="picker-row"><span>🌌 Application Outer Background:</span><input type="color" id="theme-body-bg" value="#f8fafc" oninput="applyCustomThemeFromPickers()"></label>
+                    <label class="picker-row"><span>📦 Main Containers Panel BG:</span><input type="color" id="theme-container-bg" value="#ffffff" oninput="applyCustomThemeFromPickers()"></label>
+                    <label class="picker-row"><span>📁 Sidebars & Drawers BG:</span><input type="color" id="theme-sidebar-bg" value="#f1f5f9" oninput="applyCustomThemeFromPickers()"></label>
+                    <label class="picker-row"><span>💬 Message Stream Grid Background:</span><input type="color" id="theme-chat-main-bg" value="#ffffff" oninput="applyCustomThemeFromPickers()"></label>
+                    <label class="picker-row"><span>🗂️ Header & Action Toolbars BG:</span><input type="color" id="theme-header-bg" value="#f8fafc" oninput="applyCustomThemeFromPickers()"></label>
+                    <label class="picker-row"><span>📥 Incoming Message Capsule BG:</span><input type="color" id="theme-msg-bg-incoming" value="#e2e8f0" oninput="applyCustomThemeFromPickers()"></label>
+                    <label class="picker-row"><span>🔤 Incoming Message Text Color:</span><input type="color" id="theme-msg-text-incoming" value="#0f172a" oninput="applyCustomThemeFromPickers()"></label>
+                    <label class="picker-row"><span>📤 Outgoing Message Capsule BG:</span><input type="color" id="theme-msg-bg-outgoing" value="#2563eb" oninput="applyCustomThemeFromPickers()"></label>
+                    <label class="picker-row"><span>🔤 Outgoing Message Text Color:</span><input type="color" id="theme-msg-text-outgoing" value="#ffffff" oninput="applyCustomThemeFromPickers()"></label>
+                    <label class="picker-row"><span>🔵 Primary Button Base Accent:</span><input type="color" id="theme-primary-button" value="#2563eb" oninput="applyCustomThemeFromPickers()"></label>
+                    <label class="picker-row"><span>🟢 Success Action Button Fill:</span><input type="color" id="theme-action-button" value="#10b981" oninput="applyCustomThemeFromPickers()"></label>
+                    <label class="picker-row"><span>🔴 Danger & Caution Alert Color:</span><input type="color" id="theme-danger-button" value="#ef4444" oninput="applyCustomThemeFromPickers()"></label>
+                    <label class="picker-row"><span>✏️ Main Application Global Typography:</span><input type="color" id="theme-text-main" value="#0f172a" oninput="applyCustomThemeFromPickers()"></label>
+                    <label class="picker-row"><span>🏁 App Border Grids & Dividers:</span><input type="color" id="theme-accent-border" value="#cbd5e1" oninput="applyCustomThemeFromPickers()"></label>
 
                     <div style="margin-top: 8px; border-top: 1px dashed #cbd5e1; padding-top: 8px;">
                         <span style="font-weight: bold; display: block; margin-bottom: 4px;">🚀 Quick Preset Initializers:</span>
                         <div style="display: flex; gap: 4px; flex-wrap: wrap;">
                             <button onclick="loadThemePresetColors('#f8fafc','#ffffff','#f1f5f9','#ffffff','#f8fafc','#e2e8f0','#0f172a','#2563eb','#ffffff','#2563eb','#10b981','#ef4444','#0f172a','#cbd5e1')" style="background:#2563eb; padding:3px 6px; border-radius:4px; font-size:0.9em;">Classic Blue</button>
                             <button onclick="loadThemePresetColors('#e70122','#ff8c00','#ffde06','#ffffff','#008121','#004cff','#760188','#e70122','#ffffff','#2563eb','#10b981','#ef4444','#0f172a','#cbd5e1')" style="background:linear-gradient(to right, red, orange, yellow, green, blue, purple); padding:3px 6px; border-radius:4px; font-size:0.9em;">Full Spectrum Pride</button>
-                            <button onclick="loadThemePresetColors('#55cdfc','#f7a8b8','#ffffff','#ffffff','#f7a8b8','#55cdfc','#0f172a','#f7a8b8','#ffffff','#55cdfc','#10b981','#ef4444','#0f172a','#cbd5e1')" style="background:linear-gradient(to right, #55cdfc, #f7a8b8, #ffffff); color:#0f172a; padding:3px 6px; border-radius:4px; font-size:0.9em; font-weight:bold;">Trans Pride (With Pink!)</button>
+                            <button onclick="loadThemePresetColors('#55cdfc','#f7a8b8','#ffffff','#ffffff','#f7a8b8','#55cdfc','#0f172a','#f7a8b8','#ffffff','#55cdfc','#10b981','#ef4444','#0f172a','#cbd5e1')" style="background:linear-gradient(to right, #55cdfc, #f7a8b8, #ffffff); color:#0f172a; padding:3px 6px; border-radius:4px; font-size:0.9em; font-weight:bold;">Trans Pride</button>
                             <button onclick="loadThemePresetColors('#fff430','#ffffff','#9c59d1','#ffffff','#000000','#9c59d1','#ffffff','#fff430','#000000','#9c59d1','#10b981','#ef4444','#000000','#cbd5e1')" style="background:#9c59d1; padding:3px 6px; border-radius:4px; font-size:0.9em;">Non-Binary</button>
                         </div>
                     </div>
@@ -222,15 +210,15 @@
             </div>
 
             <div class="game-card-box">
-                <div class="game-title">✨ Independent Avatar Accessories Studio</div>
+                <div class="game-title">✨ Avatar Accessories Studio</div>
                 <div style="font-size: 0.75em; display:flex; flex-direction:column; gap:6px; margin-top:4px;">
                     <label style="display:flex; justify-content:space-between; align-items:center;">
                         <span>🖼️ Profile Border Accessory:</span>
                         <select id="setting-border-selector" onchange="updateProfileAccessories()" style="padding:2px; font-size:0.95em;">
                             <option value="default">Standard Flat Border</option>
-                            <option value="rainbow">🏳️‍🌈 Full Rainbow Trim Border</option>
+                            <option value="rainbow">🏳️‍🌈 Full Rainbow Trim</option>
                             <option value="trans">🏳️‍⚧️ Trans Pastel Border</option>
-                            <option value="nb">💛 Non-Binary Aura Border</option>
+                            <option value="nb">💛 Non-Binary Aura</option>
                         </select>
                     </label>
                     <label style="display:flex; justify-content:space-between; align-items:center;">
@@ -254,6 +242,7 @@
                         <input type="checkbox" id="setting-audio-toggle" checked>
                     </label>
                     <button onclick="clearChatHistoryCache()" style="background:var(--danger-button); width:100%; padding:4px; font-size:0.95em; border-radius:6px;">Clear Log Cache</button>
+                    <button onclick="clearSavedFriends()" style="background:#475569; width:100%; padding:4px; font-size:0.95em; border-radius:6px;">Clear All Contacts</button>
                 </div>
             </div>
         </div>
@@ -261,7 +250,7 @@
 </div>
 
 <div class="app-container">
-    <div class="sidebar" id="app-sidebar-panel">
+    <div class="sidebar hidden-panel" id="app-sidebar-panel">
         <div class="sidebar-section">
             <div class="sidebar-header">👥 FRIENDS ROSTER</div>
             <div class="entry-form">
@@ -285,12 +274,12 @@
             <div class="header">
                 <div class="header-top">
                     <div class="header-main-title">
-                        <button class="panel-toggle-btn" id="toggle-sidebar-btn" onclick="toggleSidebarPanel()">◀ Friends</button>
+                        <button class="panel-toggle-btn" id="toggle-sidebar-btn" onclick="toggleSidebarPanel()">▶ Friends</button>
                         <span id="chat-title-text">🚀 AveryChat</span>
                     </div>
-                    <div style="display: flex; gap: 8px; align-items: center;">
+                    <div style="display: flex; gap: 4px; align-items: center;">
                         <div id="typing-indicator" style="font-size: 0.7em; color: #a855f7; font-weight: bold; display: none;">typing...</div>
-                        <button class="settings-gear-btn" id="settings-trigger-button" onclick="toggleSettingsModal(true)" disabled>⚙️ Theme Studio</button>
+                        <button class="settings-gear-btn" id="settings-trigger-button" onclick="toggleSettingsModal(true)" disabled>⚙️ <span>Studio</span></button>
                         <button class="panel-toggle-btn" id="toggle-utilities-btn" onclick="toggleUtilitiesDrawer()">Utilities ▶</button>
                     </div>
                 </div>
@@ -301,22 +290,22 @@
                     <div class="my-id-display" id="my-id-text">Initializing Secure Connection ID...</div>
                 </div>
                 <div class="row">
-                    <input type="text" id="friend-id-input" placeholder="Target Room Peer ID..." style="flex:1; padding:6px; border-radius:6px; border:1px solid var(--accent-border);">
-                    <button id="connect-btn" class="btn-action">Link Room</button>
+                    <input type="text" id="friend-id-input" placeholder="Target Room Peer ID..." style="flex:1; padding:6px; border-radius:6px; border:1px solid var(--accent-border); min-width: 0;">
+                    <button id="connect-btn" class="btn-action">Link</button>
                 </div>
             </div>
 
             <div class="messages" id="message-box"></div>
 
-            <div style="background: #fef08a; padding: 6px 16px; font-size: 0.75em; display: flex; align-items: center; gap: 6px; font-weight: bold; border-top: 1px solid #e2e8f0; color: #0f172a;">
+            <div style="background: #fef08a; padding: 6px 12px; font-size: 0.75em; display: flex; align-items: center; gap: 6px; font-weight: bold; border-top: 1px solid #e2e8f0; color: #0f172a;">
                 <input type="checkbox" id="broken-keyboard-toggle">
-                <span>⚠️ Activate Chaos Typing Mode (Deletes random characters!)</span>
+                <span>⚠️ Chaos Typing Mode</span>
             </div>
 
             <div class="input-area">
                 <input type="file" id="file-attachment-input" style="display: none;" onchange="handleFileSelection(this)">
                 <button class="circle-btn" onclick="document.getElementById('file-attachment-input').click()" title="Send Image/File">📎</button>
-                <input type="text" id="message-input" placeholder="Type a safe, friendly message..." disabled>
+                <input type="text" id="message-input" placeholder="Type a message..." disabled>
                 <button class="circle-btn" id="giphy-toggle-btn" onclick="toggleGiphyPopover()" title="Search GIFs">👾</button>
                 <button id="send-btn" disabled>Send</button>
 
@@ -329,11 +318,14 @@
             </div>
         </div>
 
-        <div class="games-panel" id="games-panel-drawer" style="opacity: 0.4; pointer-events: none;">
+        <div class="games-panel hidden-panel" id="games-panel-drawer">
             <div class="games-header">⚙️ UTILITIES & PANELS</div>
             
-            <div class="game-card-box" style="border-left: 4px solid #10b981;">
-                <div class="game-title">🎙️ Audio Voice Chat Stream</div>
+            <div class="game-card-box" id="app-card-voice" style="border-left: 4px solid #10b981;">
+                <div class="game-title">
+                    <span>🎙️ Audio Voice Chat</span>
+                    <button class="window-size-btn" id="zoom-btn-voice" onclick="toggleAppCardSizeMaximized('voice')">↗</button>
+                </div>
                 <div style="display:flex; gap:6px; margin-top:4px; align-items:center;">
                     <button id="voice-call-start-btn" onclick="initializeVoiceCallStream()" style="background:#10b981; flex:1; padding:6px; border-radius:6px;">Start Voice</button>
                     <button id="voice-call-stop-btn" onclick="terminateVoiceCallStream()" style="background:#ef4444; padding:6px; border-radius:6px;" disabled>Disconnect</button>
@@ -341,31 +333,37 @@
                 </div>
             </div>
 
-            <div class="game-card-box">
-                <div class="game-title">🌐 Co-Browse Engine (Google Sandbox)</div>
+            <div class="game-card-box" id="app-card-browser">
+                <div class="game-title">
+                    <span>🌐 Co-Browse Engine (Google)</span>
+                    <button class="window-size-btn" id="zoom-btn-browser" onclick="toggleAppCardSizeMaximized('browser')">↗</button>
+                </div>
                 <div style="display:flex; gap:4px; margin-bottom: 2px;">
-                    <input type="text" id="browser-url-field" placeholder="Search parameters or link..." style="flex:1; font-size:0.75em; padding:4px; border:1px solid var(--accent-border); border-radius:4px;">
+                    <input type="text" id="browser-url-field" placeholder="Search parameters..." style="flex:1; font-size:0.75em; padding:4px; border:1px solid var(--accent-border); border-radius:4px; min-width: 0;">
                     <button onclick="triggerSharedSearch(true)" style="background:#2563eb; padding:2px 8px; border-radius:6px;">Go</button>
                 </div>
-                <iframe id="google-iframe-frame" src="https://www.google.com/search?igu=1" style="width:100%; height:160px; border:1px solid var(--accent-border); border-radius:6px; background:white;"></iframe>
+                <iframe id="google-iframe-frame" src="https://www.google.com/search?igu=1" style="width:100%; flex:1; min-height:160px; border:1px solid var(--accent-border); border-radius:6px; background:white;"></iframe>
             </div>
 
-            <div class="game-card-box" style="border-top: 2px solid #8b5cf6;">
+            <div class="game-card-box" id="app-card-games" style="border-top: 2px solid #8b5cf6;">
                 <div class="game-title">
-                    <span>🎮 Multiplayer Room Game Hub</span>
-                    <select id="hub-game-selector" onchange="switchHubGameView()" style="font-size:0.85em; padding:2px;">
-                        <option value="maze">🧱 Strategy Maze</option>
-                        <option value="ttt">❌ Tic-Tac-Toe</option>
-                        <option value="c4">🔴 Connect Four</option>
-                    </select>
+                    <span>🎮 Multiplayer Game Hub</span>
+                    <div style="display:flex; align-items:center; gap:6px;">
+                        <select id="hub-game-selector" onchange="switchHubGameView()" style="font-size:0.85em; padding:2px;">
+                            <option value="maze">🧱 Strategy Maze</option>
+                            <option value="ttt">❌ Tic-Tac-Toe</option>
+                            <option value="c4">🔴 Connect Four</option>
+                        </select>
+                        <button class="window-size-btn" id="zoom-btn-games" onclick="toggleAppCardSizeMaximized('games')">↗</button>
+                    </div>
                 </div>
 
                 <div id="hub-view-maze" class="game-subview">
                     <div id="maze-status" style="font-size:0.7em; color:#475569; margin-bottom:4px;">Maze Strategy: Navigate to the opposite edge.</div>
                     <div class="maze-grid" id="maze-grid-canvas"></div>
                     <div style="display:flex; gap:4px; margin-top:4px;">
-                        <button id="maze-mode-move" onclick="setMazeAction('MOVE')" style="background:#10b981; flex:1; padding:4px; font-size:0.7em; border-radius:6px;">Move Mode</button>
-                        <button id="maze-mode-wall" onclick="setMazeAction('WALL')" style="background:#64748b; flex:1; padding:4px; font-size:0.7em; border-radius:6px;">Wall Block Mode</button>
+                        <button id="maze-mode-move" onclick="setMazeAction('MOVE')" style="background:#10b981; flex:1; padding:4px; font-size:0.7em; border-radius:6px;">Move</button>
+                        <button id="maze-mode-wall" onclick="setMazeAction('WALL')" style="background:#475569; flex:1; padding:4px; font-size:0.7em; border-radius:6px;">Wall</button>
                         <button onclick="resetMazeGame(true)" style="background:#2563eb; padding:4px 8px; font-size:0.7em; border-radius:6px;">Reset</button>
                     </div>
                 </div>
@@ -409,9 +407,13 @@
     const giphyResultsGrid = document.getElementById('giphy-results-grid');
 
     let peer = null, activeConnections = [];
-    let currentTargetId = "", chatHistories = {}, unreadCounters = {};
-    let mySavedId = localStorage.getItem('averychat_peer_id');
+    let currentTargetId = "", unreadCounters = {};
+    
+    // Persistent Storage Maps
+    let chatHistories = JSON.parse(localStorage.getItem('averychat_history')) || {};
     let savedFriends = JSON.parse(localStorage.getItem('averychat_friends')) || [];
+    let customEmojis = JSON.parse(localStorage.getItem('averychat_custom_emojis')) || {};
+    let peerEmojiDictionaries = {}; 
 
     let activeBorderClass = "border-default";
     let activeCornerFlag = "";
@@ -421,6 +423,76 @@
     let mazeCells = Array(25).fill(""), mazeP1Pos = 2, mazeP2Pos = 22, myMazeSymbol = "P1", isMazeTurn = true, mazeCurrentAction = "MOVE";
     let tttCells = Array(9).fill(""), myTttSymbol = "X", isTttTurn = true;
     let c4Grid = Array(42).fill(""), myC4Symbol = "R", isC4Turn = true;
+
+    // Window Layout Toggles
+    function toggleAppCardSizeMaximized(appKey) {
+        const targetCard = document.getElementById(`app-card-${appKey}`);
+        const zoomBtn = document.getElementById(`zoom-btn-${appKey}`);
+        const allCards = ['voice', 'browser', 'games'];
+        
+        if (targetCard.classList.contains('maximized-app')) {
+            // Restore everything
+            allCards.forEach(key => {
+                const card = document.getElementById(`app-card-${key}`);
+                card.classList.remove('maximized-app', 'minimized-sibling');
+                document.getElementById(`zoom-btn-${key}`).innerText = "↗";
+            });
+        } else {
+            // Maximize this one, hide the others
+            allCards.forEach(key => {
+                const card = document.getElementById(`app-card-${key}`);
+                if (key === appKey) {
+                    card.classList.add('maximized-app');
+                    card.classList.remove('minimized-sibling');
+                    zoomBtn.innerText = "↙";
+                } else {
+                    card.classList.remove('maximized-app');
+                    card.classList.add('minimized-sibling');
+                }
+            });
+        }
+    }
+
+    // Custom Emoji Logic
+    function processNewEmojiUpload(input) {
+        const file = input.files[0]; if(!file) return;
+        const shortcode = document.getElementById('emoji-shortcode-input').value.trim();
+        if(!shortcode.startsWith(':') || !shortcode.endsWith(':') || shortcode.length < 3) {
+            alert("Shortcode must start and end with a colon, like :smile:"); return;
+        }
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            customEmojis[shortcode] = e.target.result;
+            localStorage.setItem('averychat_custom_emojis', JSON.stringify(customEmojis));
+            document.getElementById('emoji-shortcode-input').value = '';
+            document.getElementById('emoji-preview-status').innerText = `Saved ${shortcode}!`;
+            renderCustomEmojiTray();
+            activeConnections.forEach(conn => { conn.send({ gameType: "EMOJI_SYNC", dictionary: customEmojis }); });
+        };
+        reader.readAsDataURL(file);
+        input.value = '';
+    }
+
+    function renderCustomEmojiTray() {
+        const tray = document.getElementById('my-emoji-tray'); tray.innerHTML = '';
+        Object.keys(customEmojis).forEach(code => {
+            const wrap = document.createElement('div');
+            wrap.style = "display:flex; flex-direction:column; align-items:center; background:#f1f5f9; padding:4px; border-radius:4px; border:1px solid var(--accent-border);";
+            wrap.innerHTML = `<img src="${customEmojis[code]}" style="width:20px; height:20px; object-fit:contain;"><span style="font-size:0.65em; color:gray;">${code}</span>`;
+            wrap.onclick = () => { delete customEmojis[code]; localStorage.setItem('averychat_custom_emojis', JSON.stringify(customEmojis)); renderCustomEmojiTray(); };
+            tray.appendChild(wrap);
+        });
+    }
+
+    function parseTextShortcodes(text, senderId) {
+        let cleanText = text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        let activeDict = { ...customEmojis, ...(peerEmojiDictionaries[senderId] || {}) };
+        Object.keys(activeDict).forEach(code => {
+            const imgTag = `<img src="${activeDict[code]}" class="chat-custom-emoji" title="${code}">`;
+            cleanText = cleanText.split(code).join(imgTag);
+        });
+        return cleanText;
+    }
 
     function applyCustomThemeFromPickers() {
         const styleTag = document.getElementById('theme-variable-styles');
@@ -503,34 +575,16 @@
             giphyResultsGrid.innerHTML = '';
             if(json.results && json.results.length > 0) {
                 json.results.forEach(item => {
-                    let previewUrl = '';
-                    let fullUrl = '';
-                    
-                    if (item.media && item.media[0]) {
-                        previewUrl = item.media[0].tinygif ? item.media[0].tinygif.url : '';
-                        fullUrl = item.media[0].gif ? item.media[0].gif.url : '';
-                    } else if (item.media_formats) {
-                        previewUrl = item.media_formats.tinygif ? item.media_formats.tinygif.url : '';
-                        fullUrl = item.media_formats.gif ? item.media_formats.gif.url : '';
-                    }
-                    
+                    let previewUrl = (item.media && item.media[0]) ? item.media[0].tinygif.url : (item.media_formats ? item.media_formats.tinygif.url : '');
+                    let fullUrl = (item.media && item.media[0]) ? item.media[0].gif.url : (item.media_formats ? item.media_formats.gif.url : '');
                     if (previewUrl && fullUrl) {
-                        const img = document.createElement('img');
-                        img.src = previewUrl;
-                        img.onclick = () => { 
-                            dispatchMediaPacket('GIF', fullUrl); 
-                            toggleGiphyPopover(); 
-                        };
+                        const img = document.createElement('img'); img.src = previewUrl;
+                        img.onclick = () => { dispatchMediaPacket('GIF', fullUrl); toggleGiphyPopover(); };
                         giphyResultsGrid.appendChild(img);
                     }
                 });
-                if (giphyResultsGrid.children.length === 0) {
-                    giphyResultsGrid.innerHTML = '<div style="font-size:0.7em;color:gray;padding:10px;">Format parsing mismatch. Try again.</div>';
-                }
-            } else {
-                giphyResultsGrid.innerHTML = '<div style="font-size:0.7em;color:gray;padding:10px;">No matching animations found.</div>';
             }
-        }).catch(() => { giphyResultsGrid.innerHTML = '<div style="font-size:0.7em;color:red;padding:10px;">GIF pipeline timed out.</div>'; });
+        });
     }
 
     function handleFileSelection(input) {
@@ -550,6 +604,7 @@
         const conn = activeConnections.find(c => c.peer === currentTargetId); if (conn) conn.send(packet);
         if (!chatHistories[currentTargetId]) chatHistories[currentTargetId] = [];
         chatHistories[currentTargetId].push({ ...packet, direction: 'outgoing' });
+        localStorage.setItem('averychat_history', JSON.stringify(chatHistories));
         rawAppendMessageWithAccessories(packet, 'outgoing', "You");
     }
 
@@ -569,7 +624,7 @@
     }
     function buildTttGridUI() {
         const canv = document.getElementById('ttt-grid-canvas'); canv.innerHTML = '';
-        document.getElementById('ttt-status').innerText = isTttTurn ? `Your turn (${myTttSymbol})` : "Waiting for peer...";
+        document.getElementById('ttt-status').innerText = tttCells.every(c => c === "") ? "Click 'Reset Board' to start!" : (isTttTurn ? `Your turn (${myTttSymbol})` : "Waiting for peer...");
         for(let i=0; i<9; i++) {
             const cell = document.createElement('div'); cell.classList.add('ttt-cell'); cell.innerText = tttCells[i];
             cell.onclick = () => {
@@ -590,7 +645,7 @@
     }
     function buildC4GridUI() {
         const canv = document.getElementById('c4-grid-canvas'); canv.innerHTML = '';
-        document.getElementById('c4-status').innerText = isC4Turn ? `Your turn (${myC4Symbol==='R'?'Red':'Yellow'})` : "Waiting for peer...";
+        document.getElementById('c4-status').innerText = c4Grid.every(c => c === "") ? "Click 'Reset Connect 4' to start!" : (isC4Turn ? `Your turn (${myC4Symbol==='R'?'Red':'Yellow'})` : "Waiting for peer...");
         for(let i=0; i<42; i++) {
             const cell = document.createElement('div'); cell.classList.add('c4-cell');
             if(c4Grid[i] === "R") cell.classList.add('p1'); if(c4Grid[i] === "Y") cell.classList.add('p2');
@@ -657,7 +712,7 @@
         document.getElementById('voice-call-start-btn').disabled = true;
         document.getElementById('voice-call-stop-btn').disabled = false;
         call.on('stream', (rStream) => {
-            document.getElementById('voice-status-text').innerText = "🎙️ Live Connected";
+            document.getElementById('voice-status-text').innerText = "🎙️ Connected";
             document.getElementById('incoming-voice-element').srcObject = rStream;
         });
         call.on('close', () => { terminateVoiceCallStream(); });
@@ -677,11 +732,13 @@
         if(sendNotify) { const c = activeConnections.find(con => con.peer === currentTargetId); if(c) c.send({ gameType: "CO_BROWSE_URL", url, inputRaw: val }); }
     }
 
-    function clearChatHistoryCache() { chatHistories = {}; messageBox.innerHTML = ''; }
+    function clearChatHistoryCache() { chatHistories = {}; localStorage.removeItem('averychat_history'); messageBox.innerHTML = ''; }
+    function clearSavedFriends() { if (confirm("Delete all contacts?")) { savedFriends = []; localStorage.removeItem('averychat_friends'); renderFriendsList(); } }
 
-    function handleIncomingGamePacket(data) {
-        if (data.gameType === "CO_BROWSE_URL") { document.getElementById('browser-url-field').value = data.inputRaw; document.getElementById('google-iframe-frame').src = data.url; }
-        else if (data.gameType === "MAZE_RESET") { mazeCells = Array(25).fill(""); mazeP1Pos = 2; mazeP2Pos = 22; mazeCells[mazeP1Pos] = "🟢"; mazeCells[mazeP2Pos] = "🔴"; myMazeSymbol = data.role; isMazeTurn = false; buildMazeGridUI(); }
+    function handleIncomingGamePacket(data, senderId) {
+        if (data.gameType === "EMOJI_SYNC") { peerEmojiDictionaries[senderId] = data.dictionary; }
+        else if (data.gameType === "CO_BROWSE_URL") { document.getElementById('browser-url-field').value = data.inputRaw; document.getElementById('google-iframe-frame').src = data.url; }
+        else if (data.gameType === "MAZE_RESET") { mazeCells = data.cells || Array(25).fill(""); mazeP1Pos = 2; mazeP2Pos = 22; mazeCells[mazeP1Pos] = "🟢"; mazeCells[mazeP2Pos] = "🔴"; myMazeSymbol = data.role; isMazeTurn = false; buildMazeGridUI(); }
         else if (data.gameType === "MAZE_UPDATE") { mazeCells = data.cells; mazeP1Pos = data.p1; mazeP2Pos = data.p2; isMazeTurn = true; buildMazeGridUI(); }
         else if (data.gameType === "TTT_RESET") { tttCells = Array(9).fill(""); myTttSymbol = data.symbol; isTttTurn = false; buildTttGridUI(); }
         else if (data.gameType === "TTT_UPDATE") { tttCells = data.cells; isTttTurn = true; buildTttGridUI(); }
@@ -689,17 +746,14 @@
         else if (data.gameType === "C4_UPDATE") { c4Grid = data.cells; isC4Turn = true; buildC4GridUI(); }
     }
 
-    if (!mySavedId) { mySavedId = 'ave-' + Math.random().toString(16).slice(2, 6); localStorage.setItem('averychat_peer_id', mySavedId); }
+    let mySavedId = localStorage.getItem('averychat_peer_id');
+    if (!mySavedId) { mySavedId = 'avery-' + Math.random().toString(16).slice(2, 6); localStorage.setItem('averychat_peer_id', mySavedId); }
     const myAvatarString = `https://api.dicebear.com/7.x/bottts/svg?seed=${mySavedId}`;
-    renderFriendsList(); startPeerEngine(mySavedId);
+    
+    renderFriendsList(); renderCustomEmojiTray(); startPeerEngine(mySavedId);
 
     function startPeerEngine(chosenId) {
-        peer = new Peer(chosenId, {
-            host: "averychat-peer-server.onrender.com",
-            port: 443,
-            path: "/peerjs",
-            secure: true
-        });
+        peer = new Peer(chosenId, { host: "averychat-peer-server.onrender.com", port: 443, path: "/peerjs", secure: true });
         peer.on('open', (id) => { myIdText.innerText = `Room Network ID Token: ${id}`; });
         peer.on('connection', handleIncomingDataChannel);
         peer.on('call', (c) => { if(confirm("Accept incoming voice stream?")) { navigator.mediaDevices.getUserMedia({ audio: true }).then((s) => { localMicrophoneAudioStream = s; c.answer(s); bindVoiceCallEvents(c); }); } });
@@ -709,17 +763,23 @@
 
     function handleIncomingDataChannel(conn) {
         if (activeConnections.some(c => c.peer === conn.peer)) return;
-        conn.on('open', () => { activeConnections.push(conn); unreadCounters[conn.peer] = 0; renderFriendsList(); if (!currentTargetId) { currentTargetId = conn.peer; enableInputLayout(); } });
+        conn.on('open', () => { 
+            activeConnections.push(conn); unreadCounters[conn.peer] = 0; renderFriendsList(); 
+            if (!currentTargetId) { currentTargetId = conn.peer; enableInputLayout(); }
+            conn.send({ gameType: "EMOJI_SYNC", dictionary: customEmojis });
+        });
         conn.on('data', (data) => {
-            if (data.gameType) { handleIncomingGamePacket(data); return; }
+            if (data.gameType) { handleIncomingGamePacket(data, conn.peer); return; }
             if (data.type === "STATUS_READ_NOTIFY") { const t = document.getElementById(`status-${data.msgId}`); if (t) t.innerText = "👁️ Read"; return; }
             if (data.type === "TYPING_UPDATE") { if (conn.peer === currentTargetId) typingIndicator.style.display = data.typing ? "block" : "none"; return; }
+            
             if (!chatHistories[conn.peer]) chatHistories[conn.peer] = [];
             chatHistories[conn.peer].push({ ...data, direction: 'incoming' });
+            localStorage.setItem('averychat_history', JSON.stringify(chatHistories));
+
             if (conn.peer === currentTargetId) {
                 rawAppendMessageWithAccessories(data, 'incoming', conn.peer);
                 conn.send({ type: "STATUS_READ_NOTIFY", msgId: data.id });
-                if(document.getElementById('setting-audio-toggle').checked) { try { let a = new AudioContext(); let o = a.createOscillator(); o.connect(a.destination); o.start(); o.stop(a.currentTime+0.05); } catch(e){} }
             } else { unreadCounters[conn.peer] = (unreadCounters[conn.peer] || 0) + 1; renderFriendsList(); }
         });
     }
@@ -727,7 +787,7 @@
     function enableInputLayout() {
         messageInput.disabled = false; sendBtn.disabled = false; settingsTriggerButton.disabled = false;
         gamesPanelDrawer.style.opacity = "1"; gamesPanelDrawer.style.pointerEvents = "auto";
-        setTimeout(() => { resetMazeGame(false); resetTttGame(false); resetC4Game(false); switchHubGameView(); }, 200);
+        setTimeout(() => { switchHubGameView(); }, 200);
     }
 
     let typingTimer;
@@ -742,9 +802,12 @@
         if (brokenKeyboardToggle.checked) text = text.replace(new RegExp("abcdefghijklmnopqrstuvwxyz"[Math.floor(Math.random() * 26)], 'gi'), "");
         const msgId = 'msg-' + Math.random().toString(36).slice(2, 9);
         const packet = { type: "TEXT", id: msgId, text, avatar: myAvatarString, borderStyle: activeBorderClass, flagIcon: activeCornerFlag };
+        
         const conn = activeConnections.find(c => c.peer === currentTargetId); if (conn) conn.send(packet);
         if (!chatHistories[currentTargetId]) chatHistories[currentTargetId] = [];
         chatHistories[currentTargetId].push({ ...packet, direction: 'outgoing' });
+        localStorage.setItem('averychat_history', JSON.stringify(chatHistories));
+
         rawAppendMessageWithAccessories(packet, 'outgoing', "You"); messageInput.value = '';
     }
     sendBtn.addEventListener('click', sendMessage);
@@ -753,7 +816,9 @@
     function rawAppendMessageWithAccessories(packet, direction, sender) {
         const g = document.createElement('div'); g.classList.add('message-group', direction);
         const metaStr = direction === 'outgoing' ? `<div class="status-meta-text" id="status-${packet.id}">✓ Sent</div>` : '';
-        let contentMarkup = `<div class="message">${packet.text}</div>`;
+        
+        let parsedBody = (packet.type === 'TEXT') ? parseTextShortcodes(packet.text, direction === 'outgoing' ? 'me' : currentTargetId) : packet.text;
+        let contentMarkup = `<div class="message">${parsedBody}</div>`;
         
         if (packet.type === 'GIF') contentMarkup = `<div class="message"><img class="chat-gif" src="${packet.text}"></div>`;
         else if (packet.type === 'IMAGE') contentMarkup = `<div class="message"><img class="chat-image" src="${packet.text}"></div>`;
@@ -783,13 +848,21 @@
         savedFriends.forEach(f => {
             const d = document.createElement('div'); d.classList.add('list-item'); if (f.id === currentTargetId) d.classList.add('active-chat');
             const bCount = unreadCounters[f.id] || 0;
-            d.innerHTML = `<div style="display:flex; flex-direction:column;"><span style="font-size:0.8em; font-weight:bold;">${f.name}${f.pronouns?`<span class="pronoun-tag">${f.pronouns}</span>`:''}</span></div>${bCount>0?`<span class="unread-count-badge">${bCount}</span>`:''}`;
+            d.innerHTML = `<div style="display:flex; flex-direction:column;"><span style="font-size:0.8em; font-weight:bold;">${f.name}${f.pronouns?`<span class=\"pronoun-tag\">${f.pronouns}</span>`:''}</span></div>${bCount>0?`<span class=\"unread-count-badge\">${bCount}</span>`:''}`;
             d.onclick = () => {
                 currentTargetId = f.id; chatTitleText.innerText = f.name; unreadCounters[f.id] = 0; renderFriendsList();
                 messageBox.innerHTML = ''; enableInputLayout();
-                if (chatHistories[f.id]) chatHistories[f.id].forEach(m => rawAppendMessageWithAccessories(m, m.direction, m.direction === 'outgoing' ? 'You' : f.name));
+                
+                let freshHistory = JSON.parse(localStorage.getItem('averychat_history')) || {};
+                chatHistories[f.id] = freshHistory[f.id] || [];
+                
+                chatHistories[f.id].forEach(m => { rawAppendMessageWithAccessories(m, m.direction, m.direction === 'outgoing' ? 'You' : f.name); });
                 const conn = activeConnections.find(c => c.peer === f.id);
-                if (conn && chatHistories[f.id]) chatHistories[f.id].forEach(m => { if (m.direction === 'incoming') conn.send({ type: "STATUS_READ_NOTIFY", msgId: m.id }); });
+                if (conn) {
+                    conn.send({ gameType: "EMOJI_SYNC", dictionary: customEmojis });
+                    if (chatHistories[f.id]) chatHistories[f.id].forEach(m => { if (m.direction === 'incoming') conn.send({ type: "STATUS_READ_NOTIFY", msgId: m.id }); });
+                }
+                if(window.innerWidth <= 768) toggleSidebarPanel();
             };
             friendListContainer.appendChild(d);
         });
