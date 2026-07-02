@@ -101,7 +101,6 @@
         .message-row.outgoing { flex-direction: row-reverse; }
 
         .message { padding: 8px 12px; border-radius: 14px; word-wrap: break-word; font-size: 0.85em; line-height: 1.4; box-shadow: 0 1px 2px rgba(0,0,0,0.03); max-width: 100%; }
-        .message img.chat-gif { max-width: 100%; border-radius: 8px; display: block; margin-top: 4px; }
         .message img.chat-image { max-width: 100%; max-height: 240px; border-radius: 8px; display: block; margin-top: 4px; }
         .chat-custom-emoji { width: 24px; height: 24px; object-fit: contain; vertical-align: middle; display: inline-block; margin: 0 2px; }
         .file-attachment-box { display: flex; align-items: center; gap: 8px; background: rgba(0,0,0,0.05); padding: 6px 12px; border-radius: 8px; margin-top: 4px; }
@@ -110,7 +109,6 @@
         .message-group.outgoing .message { background: var(--msg-bg-outgoing); color: var(--msg-text-outgoing); border-bottom-right-radius: 4px; }
         .status-meta-text { font-size: 0.62em; color: #94a3b8; font-weight: bold; margin-top: 2px; text-transform: uppercase; }
 
-        /* Apple Messages Typing Indicator Markup */
         .apple-typing-bubble { display: flex; align-items: center; gap: 4px; padding: 10px 14px; background: var(--msg-bg-incoming); border-radius: 16px; border-bottom-left-radius: 4px; border: 1px solid var(--accent-border); width: fit-content; }
         .apple-dot { width: 6px; height: 6px; background-color: #64748b; border-radius: 50%; opacity: 0.4; animation: appleDotPulse 1.4s infinite ease-in-out; }
         .apple-dot:nth-child(2) { animation-delay: 0.2s; }
@@ -133,13 +131,6 @@
         
         .panel-toggle-btn { background: #cbd5e1; color: #475569; padding: 4px 8px; border-radius: 6px; font-size: 0.8em; font-weight: bold; border: none; cursor: pointer; }
         .panel-toggle-btn:hover { background: #94a3b8; }
-
-        .giphy-popover { display: none; position: absolute; bottom: 55px; right: 10px; width: 280px; height: 320px; background: #ffffff; border: 1px solid var(--accent-border); border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.15); z-index: 2000; flex-direction: column; overflow: hidden; }
-        .giphy-header { padding: 8px; background: #f1f5f9; display: flex; gap: 4px; border-bottom: 1px solid var(--accent-border); }
-        .giphy-search-input { flex: 1; padding: 4px 8px; font-size: 0.8em; border: 1px solid var(--accent-border); border-radius: 6px; outline: none; }
-        .giphy-results { flex: 1; overflow-y: auto; display: grid; grid-template-columns: repeat(2, 1fr); gap: 4px; padding: 6px; background: #f8fafc; }
-        .giphy-results img { width: 100%; height: 90px; object-fit: cover; border-radius: 4px; cursor: pointer; transition: transform 0.1s; }
-        .giphy-results img:hover { transform: scale(1.03); }
 
         .settings-overlay { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.6); z-index: 3000; justify-content: center; align-items: center; backdrop-filter: blur(4px); padding: 10px; box-sizing: border-box; }
         .settings-modal { background: #ffffff; width: 460px; max-width: 100%; border-radius: 14px; border: 1px solid var(--accent-border); box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); overflow: hidden; display: flex; flex-direction: column; max-height: 90vh; }
@@ -174,6 +165,20 @@
         </div>
         <div class="settings-modal-body">
             
+            <div class="game-card-box" style="border-top: 3px solid #a855f7;">
+                <div class="game-title">🖼️ Profile Picture Studio</div>
+                <div style="font-size: 0.75em; display:flex; flex-direction:column; gap:6px; margin-top:4px;">
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <img id="settings-pfp-preview" src="" style="width:40px; height:40px; border-radius:50%; object-fit:cover; border:1px solid var(--accent-border);">
+                        <div style="display:flex; flex-direction:column; gap:4px;">
+                            <input type="file" id="pfp-file-input" accept="image/*" style="display:none;" onchange="processCustomAvatarUpload(this)">
+                            <button onclick="document.getElementById('pfp-file-input').click()" style="background:#a855f7; padding:4px 8px; border-radius:4px;">Upload Custom Avatar</button>
+                            <button onclick="resetAvatarToDefaultRobot()" style="background:#64748b; padding:2px 6px; border-radius:4px; font-size:0.9em;">Reset to Robot</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div class="game-card-box" style="border-top: 3px solid #16a34a;">
                 <div class="game-title">🐱 Custom Emoji Studio</div>
                 <div style="font-size: 0.75em; display:flex; flex-direction:column; gap:6px; margin-top:4px;">
@@ -309,15 +314,7 @@
                 <input type="file" id="file-attachment-input" style="display: none;" onchange="handleFileSelection(this)">
                 <button class="circle-btn" onclick="document.getElementById('file-attachment-input').click()" title="Send Image/File">📎</button>
                 <input type="text" id="message-input" placeholder="Type a message..." disabled>
-                <button class="circle-btn" id="giphy-toggle-btn" onclick="toggleGiphyPopover()" title="Search GIFs">👾</button>
                 <button id="send-btn" disabled>Send</button>
-
-                <div class="giphy-popover" id="giphy-popover-panel">
-                    <div class="giphy-header">
-                        <input type="text" id="giphy-search-box" class="giphy-search-input" placeholder="Search Tenor GIFs..." onkeyup="searchGiphyChannels()">
-                    </div>
-                    <div class="giphy-results" id="giphy-results-grid"></div>
-                </div>
             </div>
         </div>
 
@@ -404,8 +401,6 @@
     const brokenKeyboardToggle = document.getElementById('broken-keyboard-toggle');
     const settingsOverlayPanel = document.getElementById('settings-overlay-panel');
     const settingsTriggerButton = document.getElementById('settings-trigger-button');
-    const giphyPopoverPanel = document.getElementById('giphy-popover-panel');
-    const giphyResultsGrid = document.getElementById('giphy-results-grid');
 
     let peer = null, activeConnections = [];
     let currentTargetId = "", unreadCounters = {};
@@ -427,6 +422,37 @@
     let availableAlphabetPool = [];
     let permanentlyEliminatedLetters = [];
     let chaosGameLoopIntervalId = null;
+
+    // Custom PFP Store Handling
+    let baseRobotAvatar = "";
+    let localCustomAvatarB64 = localStorage.getItem('averychat_custom_pfp') || "";
+
+    function setupProfileAvatarDefaults(peerId) {
+        baseRobotAvatar = `https://api.dicebear.com/7.x/bottts/svg?seed=${peerId}`;
+        document.getElementById('settings-pfp-preview').src = localCustomAvatarB64 || baseRobotAvatar;
+    }
+
+    function getActiveAvatarString() {
+        return localCustomAvatarB64 || baseRobotAvatar;
+    }
+
+    function processCustomAvatarUpload(input) {
+        const file = input.files[0]; if(!file) return;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            localCustomAvatarB64 = e.target.result;
+            localStorage.setItem('averychat_custom_pfp', localCustomAvatarB64);
+            document.getElementById('settings-pfp-preview').src = localCustomAvatarB64;
+        };
+        reader.readAsDataURL(file);
+        input.value = '';
+    }
+
+    function resetAvatarToDefaultRobot() {
+        localCustomAvatarB64 = "";
+        localStorage.removeItem('averychat_custom_pfp');
+        document.getElementById('settings-pfp-preview').src = baseRobotAvatar;
+    }
 
     function togglePermanentChaosMode(checkbox) {
         const reportDiv = document.getElementById('chaos-eliminated-letters');
@@ -591,31 +617,6 @@
         activeCornerFlag = document.getElementById('setting-flag-selector').value;
     }
 
-    function toggleGiphyPopover() {
-        giphyPopoverPanel.style.display = giphyPopoverPanel.style.display === 'flex' ? 'none' : 'flex';
-        if(giphyPopoverPanel.style.display === 'flex') searchGiphyChannels();
-    }
-    function searchGiphyChannels() {
-        const query = document.getElementById('giphy-search-box').value.trim();
-        const searchTerm = query ? encodeURIComponent(query) : 'nature';
-        let url = `https://g.tenor.com/v1/search?q=${searchTerm}&key=LIVDTRZ9OR97&limit=10`;
-        
-        fetch(url).then(res => res.json()).then(json => {
-            giphyResultsGrid.innerHTML = '';
-            if(json.results && json.results.length > 0) {
-                json.results.forEach(item => {
-                    let previewUrl = (item.media && item.media[0]) ? item.media[0].tinygif.url : (item.media_formats ? item.media_formats.tinygif.url : '');
-                    let fullUrl = (item.media && item.media[0]) ? item.media[0].gif.url : (item.media_formats ? item.media_formats.gif.url : '');
-                    if (previewUrl && fullUrl) {
-                        const img = document.createElement('img'); img.src = previewUrl;
-                        img.onclick = () => { dispatchMediaPacket('GIF', fullUrl); toggleGiphyPopover(); };
-                        giphyResultsGrid.appendChild(img);
-                    }
-                });
-            }
-        });
-    }
-
     function handleFileSelection(input) {
         const file = input.files[0]; if(!file) return;
         const reader = new FileReader();
@@ -629,7 +630,7 @@
 
     function dispatchMediaPacket(mode, contentUrl, optionalName = '') {
         const msgId = 'msg-' + Math.random().toString(36).slice(2, 9);
-        const packet = { type: mode, id: msgId, text: contentUrl, fileName: optionalName, avatar: myAvatarString, borderStyle: activeBorderClass, flagIcon: activeCornerFlag };
+        const packet = { type: mode, id: msgId, text: contentUrl, fileName: optionalName, avatar: getActiveAvatarString(), borderStyle: activeBorderClass, flagIcon: activeCornerFlag };
         const conn = activeConnections.find(c => c.peer === currentTargetId); if (conn) conn.send(packet);
         if (!chatHistories[currentTargetId]) chatHistories[currentTargetId] = [];
         chatHistories[currentTargetId].push({ ...packet, direction: 'outgoing' });
@@ -803,12 +804,13 @@
 
     let mySavedId = localStorage.getItem('averychat_peer_id');
     if (!mySavedId) { mySavedId = 'avery-' + Math.random().toString(16).slice(2, 6); localStorage.setItem('averychat_peer_id', mySavedId); }
-    const myAvatarString = `https://api.dicebear.com/7.x/bottts/svg?seed=${mySavedId}`;
     
+    setupProfileAvatarDefaults(mySavedId);
     renderFriendsList(); renderCustomEmojiTray(); startPeerEngine(mySavedId);
 
     function startPeerEngine(chosenId) {
-        // Connected fallback servers to assist data passage across tricky home networks
+        myIdText.innerText = "Connecting to cloud node directory...";
+        
         peer = new Peer(chosenId, { 
             host: "averychat-peer-server.onrender.com", 
             port: 443, 
@@ -821,7 +823,20 @@
                 ]
             }
         });
-        peer.on('open', (id) => { myIdText.innerText = `Room Network ID Token: ${id}`; });
+
+        peer.on('open', (id) => { 
+            myIdText.innerText = `Room Network ID Token: ${id}`; 
+        });
+
+        peer.on('error', (err) => {
+            console.error("PeerJS Layer Event Code:", err.type);
+            // Auto recovery script logic instead of forcing manual browser reloads
+            if (err.type === 'disconnect' || err.type === 'network' || err.type === 'server-error') {
+                myIdText.innerText = "Network stutter detected. Hot-relinking engine...";
+                setTimeout(() => { startPeerEngine(chosenId); }, 2500);
+            }
+        });
+
         peer.on('connection', handleIncomingDataChannel);
         peer.on('call', (c) => { if(confirm("Accept incoming voice stream?")) { navigator.mediaDevices.getUserMedia({ audio: true }).then((s) => { localMicrophoneAudioStream = s; c.answer(s); bindVoiceCallEvents(c); }); } });
     }
@@ -840,7 +855,6 @@
             if (data.type === "STATUS_READ_NOTIFY") { const t = document.getElementById(`status-${data.msgId}`); if (t) t.innerText = "👁️ Read"; return; }
             if (data.type === "TYPING_UPDATE") { if (conn.peer === currentTargetId) updateAppleTypingIndicator(data.typing, conn.peer); return; }
             
-            // Wipe typing indicator bubble when an active payload hits
             if (conn.peer === currentTargetId) updateAppleTypingIndicator(false, conn.peer);
 
             if (!chatHistories[conn.peer]) chatHistories[conn.peer] = [];
@@ -881,7 +895,7 @@
         }
 
         const msgId = 'msg-' + Math.random().toString(36).slice(2, 9);
-        const packet = { type: "TEXT", id: msgId, text, avatar: myAvatarString, borderStyle: activeBorderClass, flagIcon: activeCornerFlag };
+        const packet = { type: "TEXT", id: msgId, text, avatar: getActiveAvatarString(), borderStyle: activeBorderClass, flagIcon: activeCornerFlag };
         
         if (conn) conn.send(packet);
         if (!chatHistories[currentTargetId]) chatHistories[currentTargetId] = [];
@@ -894,7 +908,6 @@
     messageInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendMessage(); });
 
     function rawAppendMessageWithAccessories(packet, direction, sender) {
-        // Clear any floating typing objects before rendering standard blocks
         const legacyNode = document.getElementById('apple-typing-wrapper');
         if (legacyNode) legacyNode.remove();
 
@@ -904,8 +917,7 @@
         let parsedBody = (packet.type === 'TEXT') ? parseTextShortcodes(packet.text, direction === 'outgoing' ? 'me' : currentTargetId) : packet.text;
         let contentMarkup = `<div class="message">${parsedBody}</div>`;
         
-        if (packet.type === 'GIF') contentMarkup = `<div class="message"><img class="chat-gif" src="${packet.text}"></div>`;
-        else if (packet.type === 'IMAGE') contentMarkup = `<div class="message"><img class="chat-image" src="${packet.text}"></div>`;
+        if (packet.type === 'IMAGE') contentMarkup = `<div class="message"><img class="chat-image" src="${packet.text}"></div>`;
         else if (packet.type === 'FILE') contentMarkup = `<div class="message"><div class="file-attachment-box">📂 <a href="${packet.text}" download="${packet.fileName}" style="color:inherit;font-weight:bold;">Download ${packet.fileName}</a></div></div>`;
 
         g.innerHTML = `
